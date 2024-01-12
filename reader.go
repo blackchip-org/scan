@@ -2,64 +2,67 @@ package scan
 
 import (
 	"bufio"
-	"fmt"
+	"errors"
 	"io"
 )
 
-type PeekReader struct {
-	src   *bufio.Reader
-	ahead []rune
-	err   error
+type MarkReader struct {
+	src    *bufio.Reader
+	record bool
+	undo   []rune
 }
 
-func NewPeekReader(r io.Reader) *PeekReader {
-	return &PeekReader{src: bufio.NewReader(r)}
+func NewMarkReader(r io.Reader) *MarkReader {
+	return &MarkReader{src: bufio.NewReader(r)}
 }
 
-func (r *PeekReader) Read() (rune, error) {
-	if r.err != nil && len(r.ahead) == 0 {
-		return 0, r.err
-	}
-	if len(r.ahead) > 0 {
-		var ch rune
-		ch, r.ahead = r.ahead[0], r.ahead[1:]
-		return ch, nil
+func (r *MarkReader) Read() (rune, error) {
+	if !r.record {
+		if len(r.undo) > 0 {
+			var ch rune
+			ch, r.undo = r.undo[0], r.undo[1:]
+			return ch, nil
+		}
+		ch, _, err := r.src.ReadRune()
+		return ch, err
 	}
 	ch, _, err := r.src.ReadRune()
-	r.err = err
-	return ch, err
+	if err != nil {
+		return 0, err
+	}
+	r.undo = append(r.undo, ch)
+	return ch, nil
 }
 
-func (r *PeekReader) PeekTo(n int) (string, error) {
-	if n < 0 {
-		return "", fmt.Errorf("invalid peek value: %v", n)
-	}
-	if n <= len(r.ahead) {
-		return string(r.ahead[:n]), nil
-	}
-	diff := n - len(r.ahead)
-	for i := 0; i < diff; i++ {
-		ch, _, err := r.src.ReadRune()
+func (r *MarkReader) ReadAll() (string, error) {
+	var all []rune
+	var err error
+	for {
+		var ch rune
+		ch, err = r.Read()
 		if err != nil {
-			r.err = err
 			break
 		}
-		r.ahead = append(r.ahead, ch)
+		all = append(all, ch)
 	}
-	err := r.err
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		err = nil
 	}
-	return string(r.ahead), err
+	return string(all), err
 }
 
-func (r *PeekReader) PeekAt(n int) (rune, error) {
-	_, err := r.PeekTo(n)
-	if err != nil {
-		return EndOfText, err
+func (r *MarkReader) Mark() {
+	if r.record {
+		panic("stream already marked")
 	}
-	if n > len(r.ahead) {
-		return EndOfText, r.err
-	}
-	return r.ahead[n-1], nil
+	r.record = true
+}
+
+func (r *MarkReader) Reset() {
+	r.record = false
+}
+
+func (r *MarkReader) Unmark() {
+	r.record = true
+	r.undo = nil
 }

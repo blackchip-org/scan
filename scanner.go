@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-const EndOfText = rune(-1)
-
 // Pos represents a position within an input stream.
 type Pos struct {
 	Name   string `json:",omitempty"`
@@ -70,17 +68,20 @@ type Token struct {
 
 type Scanner struct {
 	This    rune
+	Next    rune
 	Value   strings.Builder
 	Literal strings.Builder
 	Tags    []string
-	src     *PeekReader
+	src     *MarkReader
 	err     *Error
+	nextErr *Error
 	thisPos Pos
 	tokPos  Pos
 }
 
 func New(name string, src io.Reader) *Scanner {
-	s := &Scanner{src: NewPeekReader(src)}
+	s := &Scanner{src: NewMarkReader(src)}
+	s.next()
 	s.next()
 	s.thisPos = NewPos(name)
 	s.tokPos = NewPos(name)
@@ -107,6 +108,13 @@ func (s *Scanner) Is(c Class) bool {
 	return c(s.This)
 }
 
+func (s *Scanner) IsNext(c Class) bool {
+	if c == nil {
+		return false
+	}
+	return c(s.Next)
+}
+
 // Keep advances the stream to the next rune and adds the current rune to
 // the token value and literal.
 func (s *Scanner) Keep() {
@@ -128,31 +136,6 @@ func (s *Scanner) Skip() {
 // rune to the token.
 func (s *Scanner) Discard() {
 	s.next()
-}
-
-// Peek looks ahead to the nth rune in the input stream and returns that
-// value. If an error or end of stream is encountered, EndOfText is returned.
-// When called with n == 0, the current rune is returned.
-func (s *Scanner) Peek(n int) rune {
-	if s.This == EndOfText {
-		return EndOfText
-	}
-	if n == 0 {
-		return s.This
-	}
-	ahead, _ := s.src.PeekAt(n)
-	return ahead
-}
-
-// PeekTo looks ahead and returns the string containing the nth runes in
-// the stream. The string returned includes the current rune. If an error or
-// end of stream is encountered, a blank string is returned.
-func (s *Scanner) PeekTo(n int) string {
-	if s.This == EndOfText {
-		return ""
-	}
-	ahead, _ := s.src.PeekTo(n)
-	return string(s.This) + ahead
 }
 
 // Emit returns the token that has been built and resets the builder for the
@@ -198,19 +181,20 @@ func (s *Scanner) next() {
 	}
 
 	var err error
-	s.This, err = s.src.Read()
+	s.This, s.err = s.Next, s.nextErr
+	s.Next, err = s.src.Read()
 
 	if err != nil {
 		// Mark the stream as done when seeing an EOF but don't retain that
 		// as an actual error
 		if !errors.Is(err, io.EOF) {
-			s.err = &Error{
+			s.nextErr = &Error{
 				Pos:     s.thisPos,
 				Message: fmt.Sprintf("error reading stream: %v", err),
 				Cause:   err,
 			}
 		}
-		s.This = EndOfText
+		s.Next = EndOfText
 	}
 }
 
