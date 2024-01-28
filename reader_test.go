@@ -1,47 +1,86 @@
 package scan
 
 import (
-	"fmt"
+	"io"
+	"strconv"
 	"strings"
 	"testing"
 )
 
-func TestMarkReader(t *testing.T) {
+func TestPeekTo(t *testing.T) {
+	text := "1234567"
 	tests := []struct {
-		in      string
-		initial int
-		mark    int
-		reset   bool
-		out     string
+		n   int
+		val string
 	}{
-		{"123456789", 0, 0, true, "123456789"},
-		{"123456789", 0, 3, true, "123456789"},
-		{"123456789", 0, 3, false, "456789"},
-		{"123456789", 3, 3, true, "456789"},
-		{"123456789", 3, 30, true, "456789"},
-		{"123456789", 3, 3, false, "789"},
+		{0, ""},
+		{1, "1"},
+		{3, "123"},
+		{8, "1234567"},
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%v", test), func(t *testing.T) {
-			r := NewMarkReader(strings.NewReader(test.in))
-			for i := 0; i < test.initial; i++ {
-				r.Read()
+		t.Run(strconv.Itoa(test.n), func(t *testing.T) {
+			r := NewPeekReader(strings.NewReader(text))
+			peek, _ := r.PeekTo(test.n)
+			if peek != test.val {
+				t.Errorf("\n have: [%v] \n want: [%v]", peek, test.val)
 			}
-			r.Mark()
-			for i := 0; i < test.mark; i++ {
-				r.Read()
+			var valBuf []rune
+			for {
+				ch, err := r.Read()
+				if err != nil {
+					break
+				}
+				valBuf = append(valBuf, ch)
 			}
-			if test.reset {
-				r.Reset()
-			}
-			have, err := r.ReadAll()
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if string(have) != test.out {
-				t.Errorf("\n have: %v \n want: %v", string(have), test.out)
+			val := string(valBuf)
+			if val != text {
+				t.Errorf("\n full \n have: [%v] \n want: [%v]", val, text)
 			}
 		})
+	}
+}
+
+func TestPeekAt(t *testing.T) {
+	text := "1234567"
+	tests := []struct {
+		n   int
+		val rune
+	}{
+		{1, '1'},
+		{3, '3'},
+		{8, EndOfText},
+	}
+
+	for _, test := range tests {
+		t.Run(strconv.Itoa(test.n), func(t *testing.T) {
+			r := NewPeekReader(strings.NewReader(text))
+			peek, _ := r.PeekAt(test.n)
+			if peek != test.val {
+				t.Errorf("\n have: [%c] \n want: [%c]", peek, test.val)
+			}
+		})
+	}
+}
+
+func TestReaderEOF(t *testing.T) {
+	r := NewPeekReader(strings.NewReader("123"))
+	v, err := r.PeekTo(4)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v != "123" {
+		t.Fatalf("\n have: %v \n want: %v", v, "123")
+	}
+	for i := 0; i < 3; i++ {
+		_, err := r.Read()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+	_, err = r.Read()
+	if err != io.EOF {
+		t.Errorf("\n have: %v \n want: EOF", err)
 	}
 }

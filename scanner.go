@@ -72,7 +72,7 @@ type Scanner struct {
 	Value   strings.Builder
 	Literal strings.Builder
 	Tags    []string
-	src     *MarkReader
+	src     *PeekReader
 	err     *Error
 	nextErr *Error
 	thisPos Pos
@@ -80,7 +80,7 @@ type Scanner struct {
 }
 
 func New(name string, src io.Reader) *Scanner {
-	s := &Scanner{src: NewMarkReader(src)}
+	s := &Scanner{src: NewPeekReader(src)}
 	s.next()
 	s.next()
 	s.thisPos = NewPos(name)

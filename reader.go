@@ -2,67 +2,64 @@ package scan
 
 import (
 	"bufio"
-	"errors"
+	"fmt"
 	"io"
 )
 
-type MarkReader struct {
-	src    *bufio.Reader
-	record bool
-	undo   []rune
+type PeekReader struct {
+	src   *bufio.Reader
+	ahead []rune
+	err   error
 }
 
-func NewMarkReader(r io.Reader) *MarkReader {
-	return &MarkReader{src: bufio.NewReader(r)}
+func NewPeekReader(r io.Reader) *PeekReader {
+	return &PeekReader{src: bufio.NewReader(r)}
 }
 
-func (r *MarkReader) Read() (rune, error) {
-	if !r.record {
-		if len(r.undo) > 0 {
-			var ch rune
-			ch, r.undo = r.undo[0], r.undo[1:]
-			return ch, nil
-		}
-		ch, _, err := r.src.ReadRune()
-		return ch, err
+func (r *PeekReader) Read() (rune, error) {
+	if r.err != nil && len(r.ahead) == 0 {
+		return 0, r.err
+	}
+	if len(r.ahead) > 0 {
+		var ch rune
+		ch, r.ahead = r.ahead[0], r.ahead[1:]
+		return ch, nil
 	}
 	ch, _, err := r.src.ReadRune()
-	if err != nil {
-		return 0, err
-	}
-	r.undo = append(r.undo, ch)
-	return ch, nil
+	r.err = err
+	return ch, err
 }
 
-func (r *MarkReader) ReadAll() (string, error) {
-	var all []rune
-	var err error
-	for {
-		var ch rune
-		ch, err = r.Read()
+func (r *PeekReader) PeekTo(n int) (string, error) {
+	if n < 0 {
+		return "", fmt.Errorf("invalid peek value: %v", n)
+	}
+	if n <= len(r.ahead) {
+		return string(r.ahead[:n]), nil
+	}
+	diff := n - len(r.ahead)
+	for i := 0; i < diff; i++ {
+		ch, _, err := r.src.ReadRune()
 		if err != nil {
+			r.err = err
 			break
 		}
-		all = append(all, ch)
+		r.ahead = append(r.ahead, ch)
 	}
-	if errors.Is(err, io.EOF) {
+	err := r.err
+	if err == io.EOF {
 		err = nil
 	}
-	return string(all), err
+	return string(r.ahead), err
 }
 
-func (r *MarkReader) Mark() {
-	if r.record {
-		panic("stream already marked")
+func (r *PeekReader) PeekAt(n int) (rune, error) {
+	_, err := r.PeekTo(n)
+	if err != nil {
+		return EndOfText, err
 	}
-	r.record = true
-}
-
-func (r *MarkReader) Reset() {
-	r.record = false
-}
-
-func (r *MarkReader) Unmark() {
-	r.record = true
-	r.undo = nil
+	if n > len(r.ahead) {
+		return EndOfText, r.err
+	}
+	return r.ahead[n-1], nil
 }
