@@ -2,6 +2,7 @@ package peek
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -33,6 +34,9 @@ func (r *Reader) Read() (rune, error) {
 }
 
 func (r *Reader) Unread(ch rune) {
+	if errors.Is(r.err, io.EOF) {
+		r.err = nil
+	}
 	r.UnreadAll([]rune{ch})
 }
 

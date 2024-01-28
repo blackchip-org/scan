@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/blackchip-org/scan/peek"
@@ -102,11 +103,33 @@ func (s *Scanner) Is(c Class) bool {
 	return c(s.This)
 }
 
-func (s *Scanner) IsNext(c Class) bool {
+func (s *Scanner) NextIs(c Class) bool {
 	if c == nil {
 		return false
 	}
 	return c(s.Next)
+}
+
+func (s *Scanner) Peek(i int) rune {
+	if i == 0 {
+		return s.This
+	}
+	if i == 1 {
+		return s.Next
+	}
+	if i > 1 {
+		ch, err := s.src.Peek(i - 2 + 1)
+		if err != nil {
+			return EndOfText
+		}
+		return ch
+	}
+	chs := []rune(s.Literal.String())
+	li := len(chs) + i
+	if li < 0 {
+		return EndOfText
+	}
+	return chs[li]
 }
 
 // Keep advances the stream to the next rune and adds the current rune to
@@ -130,6 +153,24 @@ func (s *Scanner) Skip() {
 // rune to the token.
 func (s *Scanner) Discard() {
 	s.next()
+}
+
+func (s *Scanner) Undo() {
+	chs := []rune(s.Literal.String())
+	slices.Reverse(chs)
+	for _, ch := range chs {
+		if s.Next != EndOfText {
+			s.src.Unread(s.Next)
+		}
+		if s.This != EndOfText {
+			s.Next = s.This
+		}
+		s.This = ch
+	}
+	s.Value.Reset()
+	s.Literal.Reset()
+	s.Type = ""
+	s.thisPos = s.tokPos
 }
 
 // Emit returns the token that has been built and resets the builder for the
@@ -190,12 +231,5 @@ func (s *Scanner) next() {
 			}
 		}
 		s.Next = EndOfText
-	}
-}
-
-// Repeat calls function fn in a loop for n times.
-func Repeat(fn func(), n int) {
-	for i := 0; i < n; i++ {
-		fn()
 	}
 }
