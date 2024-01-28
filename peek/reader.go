@@ -1,4 +1,4 @@
-package scan
+package peek
 
 import (
 	"bufio"
@@ -6,17 +6,19 @@ import (
 	"io"
 )
 
-type PeekReader struct {
+const EndOfText = rune(-1)
+
+type Reader struct {
 	src   *bufio.Reader
 	ahead []rune
 	err   error
 }
 
-func NewPeekReader(r io.Reader) *PeekReader {
-	return &PeekReader{src: bufio.NewReader(r)}
+func NewReader(r io.Reader) *Reader {
+	return &Reader{src: bufio.NewReader(r)}
 }
 
-func (r *PeekReader) Read() (rune, error) {
+func (r *Reader) Read() (rune, error) {
 	if r.err != nil && len(r.ahead) == 0 {
 		return 0, r.err
 	}
@@ -30,7 +32,15 @@ func (r *PeekReader) Read() (rune, error) {
 	return ch, err
 }
 
-func (r *PeekReader) PeekTo(n int) (string, error) {
+func (r *Reader) Unread(ch rune) {
+	r.UnreadAll([]rune{ch})
+}
+
+func (r *Reader) UnreadAll(chs []rune) {
+	r.ahead = append(chs, r.ahead...)
+}
+
+func (r *Reader) PeekTo(n int) (string, error) {
 	if n < 0 {
 		return "", fmt.Errorf("invalid peek value: %v", n)
 	}
@@ -53,7 +63,7 @@ func (r *PeekReader) PeekTo(n int) (string, error) {
 	return string(r.ahead), err
 }
 
-func (r *PeekReader) PeekAt(n int) (rune, error) {
+func (r *Reader) Peek(n int) (rune, error) {
 	_, err := r.PeekTo(n)
 	if err != nil {
 		return EndOfText, err

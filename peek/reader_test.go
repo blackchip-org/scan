@@ -1,13 +1,14 @@
-package scan
+package peek
 
 import (
+	"errors"
 	"io"
 	"strconv"
 	"strings"
 	"testing"
 )
 
-func TestPeekTo(t *testing.T) {
+func TestPeek(t *testing.T) {
 	text := "1234567"
 	tests := []struct {
 		n   int
@@ -21,7 +22,7 @@ func TestPeekTo(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(strconv.Itoa(test.n), func(t *testing.T) {
-			r := NewPeekReader(strings.NewReader(text))
+			r := NewReader(strings.NewReader(text))
 			peek, _ := r.PeekTo(test.n)
 			if peek != test.val {
 				t.Errorf("\n have: [%v] \n want: [%v]", peek, test.val)
@@ -55,8 +56,8 @@ func TestPeekAt(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(strconv.Itoa(test.n), func(t *testing.T) {
-			r := NewPeekReader(strings.NewReader(text))
-			peek, _ := r.PeekAt(test.n)
+			r := NewReader(strings.NewReader(text))
+			peek, _ := r.Peek(test.n)
 			if peek != test.val {
 				t.Errorf("\n have: [%c] \n want: [%c]", peek, test.val)
 			}
@@ -65,7 +66,7 @@ func TestPeekAt(t *testing.T) {
 }
 
 func TestReaderEOF(t *testing.T) {
-	r := NewPeekReader(strings.NewReader("123"))
+	r := NewReader(strings.NewReader("123"))
 	v, err := r.PeekTo(4)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -83,4 +84,45 @@ func TestReaderEOF(t *testing.T) {
 	if err != io.EOF {
 		t.Errorf("\n have: %v \n want: EOF", err)
 	}
+}
+
+func TestUnreadAll(t *testing.T) {
+	text := "1234567"
+	tests := []struct {
+		n      int    // read these runes first
+		unread string // then unread these runes
+		val    string // remaining reads should contain this
+	}{
+		{0, "abc", "abc1234567"},
+		{4, "abc", "abc567"},
+		{7, "abc", "abc"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.val, func(t *testing.T) {
+			r := NewReader(strings.NewReader(text))
+			for i := 0; i < test.n; i++ {
+				_, err := r.Read()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			r.UnreadAll([]rune(test.unread))
+			var have []rune
+			for {
+				ch, err := r.Read()
+				if errors.Is(err, io.EOF) {
+					break
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+				have = append(have, ch)
+			}
+			if string(have) != test.val {
+				t.Errorf("\n have: %v \n want: %v", string(have), test.val)
+			}
+		})
+	}
+
 }

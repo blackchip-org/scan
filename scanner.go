@@ -5,8 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
+
+	"github.com/blackchip-org/scan/peek"
+)
+
+const (
+	EndOfText = rune(-1)
+)
+
+const (
+	ErrorType = "error"
 )
 
 // Pos represents a position within an input stream.
@@ -29,21 +38,6 @@ func (p Pos) String() string {
 	return fmt.Sprintf("%v:%v", p.Line, p.Column)
 }
 
-// General token tags
-const (
-	BinTag     = "bin"
-	CommentTag = "comment"
-	ErrTag     = "err"
-	RealTag    = "real"
-	ExpTag     = "exp"
-	HexTag     = "hex"
-	IdentTag   = "ident"
-	IntTag     = "int"
-	NumTag     = "num"
-	OctTag     = "oct"
-	StrTag     = "str"
-)
-
 type Error struct {
 	Pos     Pos
 	Message string
@@ -61,7 +55,7 @@ func (e Error) Unwrap() error {
 type Token struct {
 	Value   string
 	Literal string `json:",omitempty"`
-	Tags    []string
+	Type    string
 	Pos     Pos
 	Err     *Error
 }
@@ -71,8 +65,8 @@ type Scanner struct {
 	Next    rune
 	Value   strings.Builder
 	Literal strings.Builder
-	Tags    []string
-	src     *PeekReader
+	Type    string
+	src     *peek.Reader
 	err     *Error
 	nextErr *Error
 	thisPos Pos
@@ -80,7 +74,7 @@ type Scanner struct {
 }
 
 func New(name string, src io.Reader) *Scanner {
-	s := &Scanner{src: NewPeekReader(src)}
+	s := &Scanner{src: peek.NewReader(src)}
 	s.next()
 	s.next()
 	s.thisPos = NewPos(name)
@@ -145,7 +139,7 @@ func (s *Scanner) Emit() Token {
 
 	t.Value = s.Value.String()
 	t.Literal = s.Literal.String()
-	t.Tags = slices.Clone(s.Tags)
+	t.Type = s.Type
 	t.Pos = s.tokPos
 	t.Err = s.err
 
@@ -153,17 +147,18 @@ func (s *Scanner) Emit() Token {
 	if t.Value == t.Literal {
 		t.Literal = ""
 	}
-	// If there are no tags yet, add the value as a tag
-	if len(t.Tags) == 0 && t.Value != "" {
-		t.Tags = append(t.Tags, t.Value)
+	// If there are no type yet, set it to the value
+	if t.Type == "" {
+		t.Type = t.Value
 	}
+	// But if there was an error, set the type to error
 	if s.err != nil {
-		t.Tags = append(t.Tags, ErrTag)
+		t.Type = ErrorType
 	}
 
 	s.Value.Reset()
 	s.Literal.Reset()
-	s.Tags = nil
+	s.Type = ""
 	s.tokPos = s.thisPos
 
 	return t
