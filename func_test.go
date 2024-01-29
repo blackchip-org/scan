@@ -30,9 +30,9 @@ func TestWhile(t *testing.T) {
 		class Class
 		fn    func()
 	}{
-		{"", IsWhitespace, s.Discard},
-		{"123", IsDigit, s.Keep},
-		{"abc", IsAny, s.Keep},
+		{"", Whitespace, s.Discard},
+		{"123", Digit, s.Keep},
+		{"abc", Any, s.Keep},
 	}
 
 	for _, test := range tests {

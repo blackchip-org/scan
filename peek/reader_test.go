@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/blackchip-org/scan/iotest"
 )
 
 func TestPeek(t *testing.T) {
@@ -69,7 +71,7 @@ func TestReaderEOF(t *testing.T) {
 	r := NewReader(strings.NewReader("123"))
 	v, err := r.PeekTo(4)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatal(err)
 	}
 	if v != "123" {
 		t.Fatalf("\n have: %v \n want: %v", v, "123")
@@ -77,7 +79,7 @@ func TestReaderEOF(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		_, err := r.Read()
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatal(err)
 		}
 	}
 	_, err = r.Read()
@@ -124,5 +126,50 @@ func TestUnreadAll(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestReadError(t *testing.T) {
+	text := "123456"
+	sr := iotest.NewReader(strings.NewReader(text))
+	testErr := errors.New("test error")
+	sr.Limit = 3
+	sr.Err = testErr
+
+	r := NewReader(sr)
+	r.Read()              // 1
+	r.Read()              // 2
+	v, err := r.PeekTo(3) // 3 only
+	if v != "3" {
+		t.Fatalf("have: %v \n want: 3", v)
+	}
+	if err != testErr {
+		t.Fatal(err)
+	}
+
+	ch, err := r.Read()
+	if ch != '3' {
+		t.Fatalf("have: %b \n want: 3", ch)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = r.Read()
+	if err != testErr {
+		t.Fatal(err)
+	}
+
+	r.Unread('X')
+	ch, err = r.Read()
+	if ch != 'X' {
+		t.Fatalf("have: %b \n want: X", ch)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = r.Read()
+	if err != testErr {
+		t.Fatal(err)
+	}
 }

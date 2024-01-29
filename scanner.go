@@ -7,6 +7,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/blackchip-org/scan/peek"
 )
@@ -16,7 +17,15 @@ const (
 )
 
 const (
-	ErrorType = "error"
+	BinType     = "bin"
+	ErrorType   = "error"
+	HexType     = "hex"
+	IdentType   = "ident"
+	IllegalType = "illegal"
+	IntType     = "int"
+	OctType     = "oct"
+	RealType    = "real"
+	StrType     = "str"
 )
 
 // Pos represents a position within an input stream.
@@ -61,6 +70,22 @@ type Token struct {
 	Err     *Error
 }
 
+func (t Token) String() string {
+	var b strings.Builder
+
+	if t.Pos.Line != 0 || t.Pos.Column != 0 {
+		fmt.Fprintf(&b, "%v:%v ", t.Pos.Line, t.Pos.Column)
+	}
+	fmt.Fprintf(&b, "%v %v", t.Type, replaceNewlines(t.Value))
+	if t.Literal != "" {
+		fmt.Fprintf(&b, " [lit] %v", replaceNewlines(t.Literal))
+	}
+	if t.Err != nil {
+		fmt.Fprintf(&b, " [error] %v", t.Err)
+	}
+	return b.String()
+}
+
 type Scanner struct {
 	This    rune
 	Next    rune
@@ -68,8 +93,7 @@ type Scanner struct {
 	Literal strings.Builder
 	Type    string
 	src     *peek.Reader
-	err     *Error
-	nextErr *Error
+	srcErr  *Error
 	thisPos Pos
 	tokPos  Pos
 }
@@ -153,6 +177,7 @@ func (s *Scanner) Skip() {
 // rune to the token.
 func (s *Scanner) Discard() {
 	s.next()
+	s.Emit()
 }
 
 func (s *Scanner) Undo() {
@@ -182,7 +207,12 @@ func (s *Scanner) Emit() Token {
 	t.Literal = s.Literal.String()
 	t.Type = s.Type
 	t.Pos = s.tokPos
-	t.Err = s.err
+
+	if t.Literal == "" && s.srcErr != nil {
+		t.Type = ErrorType
+		t.Err = s.srcErr
+		return t
+	}
 
 	// Only include the literal if it differs from the value
 	if t.Value == t.Literal {
@@ -192,10 +222,6 @@ func (s *Scanner) Emit() Token {
 	if t.Type == "" {
 		t.Type = t.Value
 	}
-	// But if there was an error, set the type to error
-	if s.err != nil {
-		t.Type = ErrorType
-	}
 
 	s.Value.Reset()
 	s.Literal.Reset()
@@ -203,6 +229,18 @@ func (s *Scanner) Emit() Token {
 	s.tokPos = s.thisPos
 
 	return t
+}
+
+func (s *Scanner) Illegal(format string, args ...any) Token {
+	err := &Error{
+		Pos:     s.thisPos,
+		Message: fmt.Sprintf(format, args...),
+	}
+	s.Keep()
+	s.Type = IllegalType
+	tok := s.Emit()
+	tok.Err = err
+	return tok
 }
 
 func (s *Scanner) next() {
@@ -217,14 +255,14 @@ func (s *Scanner) next() {
 	}
 
 	var err error
-	s.This, s.err = s.Next, s.nextErr
+	s.This = s.Next
 	s.Next, err = s.src.Read()
 
 	if err != nil {
 		// Mark the stream as done when seeing an EOF but don't retain that
 		// as an actual error
 		if !errors.Is(err, io.EOF) {
-			s.nextErr = &Error{
+			s.srcErr = &Error{
 				Pos:     s.thisPos,
 				Message: fmt.Sprintf("error reading stream: %v", err),
 				Cause:   err,
@@ -232,4 +270,53 @@ func (s *Scanner) next() {
 		}
 		s.Next = EndOfText
 	}
+}
+
+func FormatTokenTable(ts []Token) string {
+	var out strings.Builder
+
+	pos := "Pos"
+	type_ := "Type"
+	val := "Value"
+
+	posLen := utf8.RuneCountInString(pos)
+	typeLen := utf8.RuneCountInString(type_)
+	valLen := utf8.RuneCountInString(val)
+	for _, t := range ts {
+		posLen = max(posLen, utf8.RuneCountInString(t.Pos.String()))
+		typeLen = max(typeLen, utf8.RuneCountInString(t.Type))
+		valLen = max(valLen, utf8.RuneCountInString(tableValue(t)))
+	}
+	line := fmt.Sprintf("%*s  %-*s  %-*s",
+		posLen, pos,
+		typeLen, type_,
+		valLen, val,
+	)
+	out.WriteString(strings.TrimRight(line, " "))
+	out.WriteRune('\n')
+	for _, t := range ts {
+		line := fmt.Sprintf("%*s  %-*s  %-*s",
+			posLen, t.Pos.String(),
+			typeLen, t.Type,
+			valLen, tableValue(t),
+		)
+		out.WriteString(strings.TrimRight(line, " "))
+		out.WriteRune('\n')
+	}
+	return out.String()
+}
+
+func replaceNewlines(s string) string {
+	return strings.ReplaceAll(s, "\n", "\u21B5")
+}
+
+func tableValue(t Token) string {
+	value := replaceNewlines(t.Value)
+	if t.Err != nil && t.Err.Cause != nil {
+		return fmt.Sprintf("%v (error: %v: %v)", value, t.Err.Message, t.Err.Cause)
+	}
+	if t.Err != nil {
+		return fmt.Sprintf("%v (error: %v)", value, t.Err.Message)
+	}
+	return value
 }
