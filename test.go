@@ -1,24 +1,51 @@
 package scan
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
-type TestCase struct {
+type Test struct {
 	src  string
 	toks []Token
+	errs [][]string
 }
 
-func NewTestCase(src string, val string, line int, col int, type_ string) TestCase {
-	return TestCase{src: src, toks: []Token{
-		{Value: val, Type: type_, Pos: Pos{Line: line, Column: col}},
-	}}
+func NewTest(src string, val string, line int, col int, type_ string) Test {
+	return Test{
+		src: src,
+		toks: []Token{{
+			Value: val,
+			Type:  type_,
+			Pos: Pos{
+				Line:   line,
+				Column: col,
+			}},
+		},
+		errs: [][]string{nil},
+	}
 }
 
-func (t TestCase) And(val string, line int, col int, type_ string) TestCase {
-	t.toks = append(t.toks, Token{Value: val, Type: type_, Pos: Pos{Line: line, Column: col}})
+func (t Test) WithError(message string) Test {
+	last := len(t.toks) - 1
+	t.errs[last] = append(t.errs[last], message)
 	return t
 }
 
-func RunTests(t *testing.T, rules RuleSet, tests []TestCase) {
+func (t Test) And(val string, line int, col int, type_ string) Test {
+	t.toks = append(t.toks, Token{
+		Value: val,
+		Type:  type_,
+		Pos: Pos{
+			Line:   line,
+			Column: col,
+		},
+	})
+	t.errs = append(t.errs, nil)
+	return t
+}
+
+func RunTests(t *testing.T, rules RuleSet, tests []Test) {
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
 			scan := NewFromString("", test.src)
@@ -31,6 +58,13 @@ func RunTests(t *testing.T, rules RuleSet, tests []TestCase) {
 				testTok := test.toks[i]
 				if tok.Value != testTok.Value || tok.Type != testTok.Type {
 					t.Fatalf("\n have: %v \n want: %v", tok, testTok)
+				}
+				if len(test.errs) > 0 {
+					have := tok.Errs.Error()
+					want := strings.Join(test.errs[i], "\n")
+					if have != want {
+						t.Fatalf("\n have errors: %v\n want errors: %v", have, want)
+					}
 				}
 			}
 			if len(toks) < len(test.toks) {

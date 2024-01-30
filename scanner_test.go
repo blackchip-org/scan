@@ -73,32 +73,25 @@ func TestPeek(t *testing.T) {
 	}
 }
 
-// func TestPeekToScanner(t *testing.T) {
-// 	src := "1234567"
-// 	tests := []struct {
-// 		n     int
-// 		value string
-// 	}{
-// 		{0, "1"},
-// 		{1, "12"},
-// 		{3, "1234"},
-// 		{8, "1234567"},
-// 	}
+func TestQuote(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{`abcd`, `"abcd"`},
+		{`ab"c"d`, `'ab"c"d'`},
+		{`ab'c'd`, `"ab'c'd"`},
+		{"ab`c`d", "\"ab`c`d\""},
+		{"a\"b\"'c'd", "`a\"b\"'c'd`"},
+		{"a\"b\"'c'`d`", "quote(a\"b\"'c'`d`)"},
+	}
 
-// 	for _, test := range tests {
-// 		t.Run(test.value, func(t *testing.T) {
-// 			s := NewFromString("", src)
-// 			value := s.PeekTo(test.n)
-// 			if value != test.value {
-// 				t.Errorf("\n have: [%v] \n want: [%v]", value, test.value)
-// 			}
-// 			Repeat(s.Keep, 10)
-// 			full := s.Emit().Value
-// 			testFull := "1234567"
-// 			if full != testFull {
-// 				t.Errorf("\n full \n have: [%v] \n want: [%v]", full, testFull)
-// 			}
-// 		})
-// 	}
-
-// }
+	for _, test := range tests {
+		t.Run(test.in, func(t *testing.T) {
+			have := Quote(test.in)
+			if have != test.want {
+				t.Errorf("\n have: %v \n want: %v", have, test.want)
+			}
+		})
+	}
+}

@@ -325,3 +325,20 @@ func FormatTokenTable(ts []Token) string {
 func replaceNewlines(s string) string {
 	return strings.ReplaceAll(s, "\n", "\u21B5")
 }
+
+func Quote(s string) string {
+	switch {
+	case !strings.Contains(s, `"`):
+		return `"` + s + `"`
+	case !strings.Contains(s, `'`):
+		return `'` + s + `'`
+	case !strings.Contains(s, "`"):
+		return "`" + s + "`"
+	default:
+		return "quote(" + s + ")"
+	}
+}
+
+func QuoteRune(r rune) string {
+	return Quote(string(r))
+}

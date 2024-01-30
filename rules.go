@@ -1,5 +1,11 @@
 package scan
 
+import (
+	"fmt"
+	"strconv"
+	"unicode/utf8"
+)
+
 type Rule interface {
 	Eval(*Scanner) bool
 }
@@ -57,7 +63,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 			}
 		}
 		if tok.Value == "" {
-			s.Illegal("unexpected character '%c'", s.This)
+			s.Illegal("unexpected %s", QuoteRune(s.This))
 			tok = s.Emit()
 		}
 		if r.postTokenFunc != nil {
@@ -70,6 +76,93 @@ func (r RuleSet) Next(s *Scanner) Token {
 	While(s, r.discards, s.Discard)
 	return tok
 }
+
+type CharEnc struct {
+	From rune
+	To   rune
+}
+
+func NewCharEnc(from rune, to rune) CharEnc {
+	return CharEnc{from, to}
+}
+
+var (
+	AlertEnc          CharEnc = NewCharEnc('a', '\a')
+	BackspaceEnc      CharEnc = NewCharEnc('b', '\b')
+	BellEnc           CharEnc = AlertEnc
+	CarriageReturnEnc CharEnc = NewCharEnc('r', '\r')
+	FormFeedEnc       CharEnc = NewCharEnc('f', '\f')
+	HorizontalTabEnc  CharEnc = NewCharEnc('t', '\t')
+	LineFeedEnc       CharEnc = NewCharEnc('n', '\n')
+	NewlineEnc        CharEnc = LineFeedEnc
+	TabEnc            CharEnc = HorizontalTabEnc
+	VerticalTabEnc    CharEnc = NewCharEnc('v', '\v')
+)
+
+type CharEncRule struct {
+	charmap map[rune]rune
+}
+
+func NewCharEncRule(maps ...CharEnc) CharEncRule {
+	r := CharEncRule{charmap: make(map[rune]rune)}
+	for _, cm := range maps {
+		r.charmap[cm.From] = cm.To
+	}
+	return r
+}
+
+func (r CharEncRule) Eval(s *Scanner) bool {
+	to, ok := r.charmap[s.This]
+	if !ok {
+		return false
+	}
+	s.Literal.WriteRune(s.This)
+	s.Value.WriteRune(to)
+	s.Skip()
+	return true
+}
+
+type HexEncRule struct {
+	flag   rune
+	digits int
+}
+
+func NewHexEncRule(flag rune, digits int) HexEncRule {
+	if digits != 2 && digits != 4 && digits != 8 {
+		panic(fmt.Sprintf("invalid digits '%v' for hex encoding map", digits))
+	}
+	return HexEncRule{flag: flag, digits: digits}
+}
+
+func (r HexEncRule) Eval(s *Scanner) bool {
+	if s.This != r.flag {
+		return false
+	}
+	s.Skip()
+	digits := make([]rune, r.digits)
+	for i := 0; i < r.digits; i++ {
+		digits[i] = s.Peek(i)
+	}
+	val, err := strconv.ParseUint(string(digits), 16, 32)
+	if err != nil {
+		s.Illegal("invalid encoding: '%v'", string(digits))
+		return true
+	}
+	ch := rune(val)
+	if !utf8.ValidRune(ch) {
+		s.Illegal("character not valid: '%v'", string(digits))
+		return true
+	}
+	Repeat(s.Skip, r.digits)
+	s.Value.WriteRune(ch)
+	return true
+}
+
+var (
+	Hex2Enc = NewHexEncRule('x', 2)
+	Hex4Enc = NewHexEncRule('u', 4)
+	Hex8Enc = NewHexEncRule('U', 8)
+)
 
 type IdentRule struct {
 	head     Class
@@ -292,18 +385,47 @@ var (
 	SignedRealExp NumRule = RealExp.WithSign(Sign)
 )
 
+type OctEncRule struct {
+}
+
+func NewOctEncRule() OctEncRule {
+	return OctEncRule{}
+}
+
+func (r OctEncRule) Eval(s *Scanner) bool {
+	if !s.Is(Digit07) {
+		return false
+	}
+	digits := make([]rune, 3)
+	for i := 0; i < 3; i++ {
+		digits = append(digits, s.Peek(i))
+	}
+	val, err := strconv.ParseUint(string(digits), 8, 8)
+	if err != nil {
+		s.Illegal("invalid encoding: '%v'", string(digits))
+		return true
+	}
+	Repeat(s.Skip, 3)
+	s.Value.WriteRune(rune(val))
+	return true
+}
+
+var OctEnc = NewOctEncRule()
+
 type StrRule struct {
-	type_     string
-	begin     rune
-	end       rune
-	escape    rune
-	multiline bool
+	type_       string
+	begin       rune
+	end         rune
+	escape      rune
+	escapeRules RuleSet
+	multiline   bool
 }
 
 func NewStrRule(begin rune, end rune) StrRule {
 	return StrRule{
-		begin: begin,
-		end:   end,
+		begin:       begin,
+		end:         end,
+		escapeRules: Rules(),
 	}
 }
 
@@ -314,6 +436,11 @@ func (r StrRule) WithType(t string) StrRule {
 
 func (r StrRule) WithEscape(rn rune) StrRule {
 	r.escape = rn
+	return r
+}
+
+func (r StrRule) WithEscapeRules(rules ...Rule) StrRule {
+	r.escapeRules = Rules(rules...)
 	return r
 }
 
@@ -348,6 +475,8 @@ func (r StrRule) Eval(s *Scanner) bool {
 			s.Skip()
 			if s.This == r.end || s.This == r.escape {
 				s.Keep()
+			} else if !r.escapeRules.Eval(s) {
+				s.Illegal("invalid escape sequence: '%v%v'", r.escape, s.This)
 			}
 		default:
 			s.Keep()
