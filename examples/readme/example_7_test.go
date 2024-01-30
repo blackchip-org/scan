@@ -27,7 +27,8 @@ func Example_example7() {
 		case s.Is(scan.LetterUnder):
 			return scanIdent(s)
 		}
-		return s.Illegal("unexpected character")
+		s.Illegal("unexpected character")
+		return s.Emit()
 	}
 
 	var toks []scan.Token

@@ -57,7 +57,8 @@ func (r RuleSet) Next(s *Scanner) Token {
 			}
 		}
 		if tok.Value == "" {
-			tok = s.Illegal("unexpected character")
+			s.Illegal("unexpected character")
+			tok = s.Emit()
 		}
 		if r.postTokenFunc != nil {
 			tok = r.postTokenFunc(s, tok)
@@ -289,6 +290,76 @@ var (
 	SignedInt     NumRule = Int.WithSign(Sign)
 	SignedReal    NumRule = Real.WithSign(Sign)
 	SignedRealExp NumRule = RealExp.WithSign(Sign)
+)
+
+type StrRule struct {
+	type_     string
+	begin     rune
+	end       rune
+	escape    rune
+	multiline bool
+}
+
+func NewStrRule(begin rune, end rune) StrRule {
+	return StrRule{
+		begin: begin,
+		end:   end,
+	}
+}
+
+func (r StrRule) WithType(t string) StrRule {
+	r.type_ = t
+	return r
+}
+
+func (r StrRule) WithEscape(rn rune) StrRule {
+	r.escape = rn
+	return r
+}
+
+func (r StrRule) WithMultiline(b bool) StrRule {
+	r.multiline = b
+	return r
+}
+
+func (r StrRule) Eval(s *Scanner) bool {
+	if s.This != r.begin {
+		return false
+	}
+	s.Skip()
+
+	s.Type = StrType
+	if r.type_ != "" {
+		s.Type = r.type_
+	}
+
+	for s.HasMore() {
+		switch {
+		case s.This == r.end:
+			s.Skip()
+			return true
+		case s.This == '\n':
+			if !r.multiline {
+				s.Illegal("not terminated")
+				return true
+			}
+			s.Keep()
+		case s.This == r.escape:
+			s.Skip()
+			if s.This == r.end || s.This == r.escape {
+				s.Keep()
+			}
+		default:
+			s.Keep()
+		}
+	}
+	s.Illegal("not terminated")
+	return true
+}
+
+var (
+	StrDoubleQuote = NewStrRule('"', '"').WithEscape('\\')
+	StrSingleQuote = NewStrRule('\'', '\'').WithEscape('\\')
 )
 
 type trueRule struct{}

@@ -21,7 +21,8 @@ func scanString(s *scan.Scanner) scan.Token {
 		}
 	}
 	if s.This != '"' {
-		return s.Illegal("unterminated string")
+		s.Illegal("unterminated string")
+		return s.Emit()
 	}
 	s.Skip() // ending quote
 	return s.Emit()
@@ -37,7 +38,8 @@ func Example_example8() {
 		case s.This == '"':
 			return scanString(s)
 		}
-		return s.Illegal("unexpected character")
+		s.Illegal("unexpected character")
+		return s.Emit()
 	}
 
 	var toks []scan.Token

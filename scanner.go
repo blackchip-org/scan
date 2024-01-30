@@ -92,6 +92,7 @@ type Scanner struct {
 	Value   strings.Builder
 	Literal strings.Builder
 	Type    string
+	err     *Error
 	src     *peek.Reader
 	srcErr  *Error
 	thisPos Pos
@@ -207,6 +208,7 @@ func (s *Scanner) Emit() Token {
 	t.Literal = s.Literal.String()
 	t.Type = s.Type
 	t.Pos = s.tokPos
+	t.Err = s.err
 
 	if t.Literal == "" && s.srcErr != nil {
 		t.Type = ErrorType
@@ -226,21 +228,19 @@ func (s *Scanner) Emit() Token {
 	s.Value.Reset()
 	s.Literal.Reset()
 	s.Type = ""
+	s.err = nil
 	s.tokPos = s.thisPos
 
 	return t
 }
 
-func (s *Scanner) Illegal(format string, args ...any) Token {
-	err := &Error{
+func (s *Scanner) Illegal(format string, args ...any) {
+	s.Type = IllegalType
+	s.err = &Error{
 		Pos:     s.thisPos,
 		Message: fmt.Sprintf(format, args...),
 	}
 	s.Keep()
-	s.Type = IllegalType
-	tok := s.Emit()
-	tok.Err = err
-	return tok
 }
 
 func (s *Scanner) next() {

@@ -168,3 +168,16 @@ func TestSignedRealWithDigitSep(t *testing.T) {
 	}
 	RunTests(t, rules, tests)
 }
+
+func TestStr(t *testing.T) {
+	rules := Rules(
+		StrDoubleQuote,
+		StrSingleQuote,
+	)
+	tests := []TestCase{
+		NewTestCase(`"a"`, `a`, 1, 1, StrType),
+		NewTestCase("'a'", "a", 1, 1, StrType),
+		//NewTestCase(`'a\'b'`, `a'b`, 1, 1, StrType),
+	}
+	RunTests(t, rules, tests)
+}
