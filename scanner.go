@@ -55,11 +55,24 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return e.Message
+	if e.Cause != nil {
+		return fmt.Sprintf("%v: error: %v: %v", e.Pos, e.Message, e.Cause)
+	}
+	return fmt.Sprintf("%v: error: %v", e.Pos, e.Message)
 }
 
 func (e Error) Unwrap() error {
 	return e.Cause
+}
+
+type Errors []Error
+
+func (es Errors) Error() string {
+	var messages []string
+	for _, e := range es {
+		messages = append(messages, e.Error())
+	}
+	return strings.Join(messages, "\n")
 }
 
 type Token struct {
@@ -67,7 +80,7 @@ type Token struct {
 	Literal string `json:",omitempty"`
 	Type    string
 	Pos     Pos
-	Err     *Error
+	Errs    Errors
 }
 
 func (t Token) String() string {
@@ -80,8 +93,8 @@ func (t Token) String() string {
 	if t.Literal != "" {
 		fmt.Fprintf(&b, " [lit] %v", replaceNewlines(t.Literal))
 	}
-	if t.Err != nil {
-		fmt.Fprintf(&b, " [error] %v", t.Err)
+	if len(t.Errs) > 0 {
+		fmt.Fprintf(&b, "\n%v", t.Errs)
 	}
 	return b.String()
 }
@@ -92,7 +105,7 @@ type Scanner struct {
 	Value   strings.Builder
 	Literal strings.Builder
 	Type    string
-	err     *Error
+	errs    Errors
 	src     *peek.Reader
 	srcErr  *Error
 	thisPos Pos
@@ -208,11 +221,11 @@ func (s *Scanner) Emit() Token {
 	t.Literal = s.Literal.String()
 	t.Type = s.Type
 	t.Pos = s.tokPos
-	t.Err = s.err
+	t.Errs = s.errs
 
 	if t.Literal == "" && s.srcErr != nil {
 		t.Type = ErrorType
-		t.Err = s.srcErr
+		t.Errs = append(t.Errs, *s.srcErr)
 		return t
 	}
 
@@ -228,7 +241,7 @@ func (s *Scanner) Emit() Token {
 	s.Value.Reset()
 	s.Literal.Reset()
 	s.Type = ""
-	s.err = nil
+	s.errs = nil
 	s.tokPos = s.thisPos
 
 	return t
@@ -236,10 +249,10 @@ func (s *Scanner) Emit() Token {
 
 func (s *Scanner) Illegal(format string, args ...any) {
 	s.Type = IllegalType
-	s.err = &Error{
+	s.errs = append(s.errs, Error{
 		Pos:     s.thisPos,
 		Message: fmt.Sprintf(format, args...),
-	}
+	})
 	s.Keep()
 }
 
@@ -285,7 +298,7 @@ func FormatTokenTable(ts []Token) string {
 	for _, t := range ts {
 		posLen = max(posLen, utf8.RuneCountInString(t.Pos.String()))
 		typeLen = max(typeLen, utf8.RuneCountInString(t.Type))
-		valLen = max(valLen, utf8.RuneCountInString(tableValue(t)))
+		valLen = max(valLen, utf8.RuneCountInString(t.Value))
 	}
 	line := fmt.Sprintf("%*s  %-*s  %-*s",
 		posLen, pos,
@@ -298,25 +311,17 @@ func FormatTokenTable(ts []Token) string {
 		line := fmt.Sprintf("%*s  %-*s  %-*s",
 			posLen, t.Pos.String(),
 			typeLen, t.Type,
-			valLen, tableValue(t),
+			valLen, replaceNewlines(t.Value),
 		)
 		out.WriteString(strings.TrimRight(line, " "))
 		out.WriteRune('\n')
+		if len(t.Errs) > 0 {
+			fmt.Fprintln(&out, t.Errs)
+		}
 	}
 	return out.String()
 }
 
 func replaceNewlines(s string) string {
 	return strings.ReplaceAll(s, "\n", "\u21B5")
-}
-
-func tableValue(t Token) string {
-	value := replaceNewlines(t.Value)
-	if t.Err != nil && t.Err.Cause != nil {
-		return fmt.Sprintf("%v (error: %v: %v)", value, t.Err.Message, t.Err.Cause)
-	}
-	if t.Err != nil {
-		return fmt.Sprintf("%v (error: %v)", value, t.Err.Message)
-	}
-	return value
 }

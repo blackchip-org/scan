@@ -38,7 +38,7 @@ func Example_example8() {
 		case s.This == '"':
 			return scanString(s)
 		}
-		s.Illegal("unexpected character")
+		s.Illegal("unexpected character '%c'", s.This)
 		return s.Emit()
 	}
 
@@ -59,5 +59,6 @@ func Example_example8() {
 	// 1:14  str      hello \"world\"
 	// 1:32  int      5678
 	// 1:36  ident    efgh
-	// 1:40  illegal  ! (error: unexpected character)
+	// 1:40  illegal  !
+	// 1:40: error: unexpected character '!'
 }

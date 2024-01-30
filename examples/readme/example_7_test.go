@@ -27,7 +27,7 @@ func Example_example7() {
 		case s.Is(scan.LetterUnder):
 			return scanIdent(s)
 		}
-		s.Illegal("unexpected character")
+		s.Illegal("unexpected character '%c'", s.This)
 		return s.Emit()
 	}
 
@@ -47,5 +47,6 @@ func Example_example7() {
 	//  1:9  ident    abcd
 	// 1:14  int      5678
 	// 1:18  ident    efgh
-	// 1:22  illegal  ! (error: unexpected character)
+	// 1:22  illegal  !
+	// 1:22: error: unexpected character '!'
 }

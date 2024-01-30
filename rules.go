@@ -57,7 +57,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 			}
 		}
 		if tok.Value == "" {
-			s.Illegal("unexpected character")
+			s.Illegal("unexpected character '%c'", s.This)
 			tok = s.Emit()
 		}
 		if r.postTokenFunc != nil {
