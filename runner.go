@@ -15,13 +15,16 @@ func NewRunner(scan *Scanner, rules RuleSet) *Runner {
 	return r
 }
 
-func (r *Runner) More() bool {
-	return len(r.lookahead.Type) > 0
+func (r *Runner) HasMore() bool {
+	return r.lookahead.Value != "" && r.lookahead.Type != ""
 }
 
 func (r *Runner) Next() Token {
 	this := r.lookahead
-	r.lookahead = r.rules.Next(r.scan)
+	r.lookahead = Token{}
+	if r.scan.HasMore() {
+		r.lookahead = r.rules.Next(r.scan)
+	}
 	return this
 }
 
@@ -31,7 +34,7 @@ func (r *Runner) Peek() Token {
 
 func (r *Runner) All() []Token {
 	var toks []Token
-	for r.More() {
+	for r.HasMore() {
 		toks = append(toks, r.Next())
 	}
 	return toks

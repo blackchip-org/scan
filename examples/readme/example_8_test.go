@@ -39,6 +39,7 @@ func Example_example8() {
 			return scanString(s)
 		}
 		s.Illegal("unexpected %s", scan.QuoteRune(s.This))
+		s.Keep()
 		return s.Emit()
 	}
 

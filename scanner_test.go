@@ -73,25 +73,11 @@ func TestPeek(t *testing.T) {
 	}
 }
 
-func TestQuote(t *testing.T) {
-	tests := []struct {
-		in   string
-		want string
-	}{
-		{`abcd`, `"abcd"`},
-		{`ab"c"d`, `'ab"c"d'`},
-		{`ab'c'd`, `"ab'c'd"`},
-		{"ab`c`d", "\"ab`c`d\""},
-		{"a\"b\"'c'd", "`a\"b\"'c'd`"},
-		{"a\"b\"'c'`d`", "quote(a\"b\"'c'`d`)"},
-	}
-
-	for _, test := range tests {
-		t.Run(test.in, func(t *testing.T) {
-			have := Quote(test.in)
-			if have != test.want {
-				t.Errorf("\n have: %v \n want: %v", have, test.want)
-			}
-		})
+func TestEmpty(t *testing.T) {
+	s := NewFromString("", "")
+	s.Keep()
+	tok := s.Emit()
+	if tok.Value != "" || tok.Type != "" {
+		t.Error(tok)
 	}
 }

@@ -45,3 +45,27 @@ func TestWhile(t *testing.T) {
 		})
 	}
 }
+
+func TestQuote(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{`abcd`, `"abcd"`},
+		{`ab"c"d`, `'ab"c"d'`},
+		{`ab'c'd`, `"ab'c'd"`},
+		{"ab`c`d", "\"ab`c`d\""},
+		{"a\"b\"'c'd", "`a\"b\"'c'd`"},
+		{"a\"b\"'c'`d`", "{!quote:a\"b\"'c'`d`}"},
+		{"ab\x00cd", `"ab{!ch:00}cd"`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.in, func(t *testing.T) {
+			have := Quote(test.in)
+			if have != test.want {
+				t.Errorf("\n have: %v \n want: %v", have, test.want)
+			}
+		})
+	}
+}

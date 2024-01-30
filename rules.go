@@ -64,6 +64,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 		}
 		if tok.Value == "" {
 			s.Illegal("unexpected %s", QuoteRune(s.This))
+			s.Keep()
 			tok = s.Emit()
 		}
 		if r.postTokenFunc != nil {
@@ -145,12 +146,12 @@ func (r HexEncRule) Eval(s *Scanner) bool {
 	}
 	val, err := strconv.ParseUint(string(digits), 16, 32)
 	if err != nil {
-		s.Illegal("invalid encoding: '%v'", string(digits))
+		s.Illegal("invalid encoding: %v", Quote(string(digits)))
 		return true
 	}
 	ch := rune(val)
 	if !utf8.ValidRune(ch) {
-		s.Illegal("character not valid: '%v'", string(digits))
+		s.Illegal("not valid: %v", Quote(string(digits)))
 		return true
 	}
 	Repeat(s.Skip, r.digits)
@@ -398,7 +399,7 @@ func (r OctEncRule) Eval(s *Scanner) bool {
 	}
 	digits := make([]rune, 3)
 	for i := 0; i < 3; i++ {
-		digits = append(digits, s.Peek(i))
+		digits[i] = s.Peek(i)
 	}
 	val, err := strconv.ParseUint(string(digits), 8, 8)
 	if err != nil {
@@ -419,6 +420,7 @@ type StrRule struct {
 	escape      rune
 	escapeRules RuleSet
 	multiline   bool
+	maxLen      uint
 }
 
 func NewStrRule(begin rune, end rune) StrRule {
@@ -449,6 +451,15 @@ func (r StrRule) WithMultiline(b bool) StrRule {
 	return r
 }
 
+func (r StrRule) WithMaxLen(l uint) StrRule {
+	r.maxLen = l
+	return r
+}
+
+func (r StrRule) recover(s *Scanner) {
+	Until(s, Rune(r.end), s.Skip)
+}
+
 func (r StrRule) Eval(s *Scanner) bool {
 	if s.This != r.begin {
 		return false
@@ -460,11 +471,21 @@ func (r StrRule) Eval(s *Scanner) bool {
 		s.Type = r.type_
 	}
 
+	length := uint(0)
 	for s.HasMore() {
-		switch {
-		case s.This == r.end:
+		if s.This == r.end {
 			s.Skip()
 			return true
+		}
+
+		length++
+		if r.maxLen > 0 && length > r.maxLen {
+			s.Illegal("too many characters (%v)", length)
+			r.recover(s)
+			return true
+		}
+
+		switch {
 		case s.This == '\n':
 			if !r.multiline {
 				s.Illegal("not terminated")
@@ -477,6 +498,7 @@ func (r StrRule) Eval(s *Scanner) bool {
 				s.Keep()
 			} else if !r.escapeRules.Eval(s) {
 				s.Illegal("invalid escape sequence: '%v%v'", r.escape, s.This)
+				r.recover(s)
 			}
 		default:
 			s.Keep()
