@@ -62,7 +62,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 				break
 			}
 		}
-		if tok.Value == "" {
+		if !tok.IsValid() {
 			s.Illegal("unexpected %s", QuoteRune(s.This))
 			s.Keep()
 			tok = s.Emit()
@@ -458,6 +458,7 @@ func (r StrRule) WithMaxLen(l uint) StrRule {
 
 func (r StrRule) recover(s *Scanner) {
 	Until(s, Rune(r.end), s.Skip)
+	s.Skip()
 }
 
 func (r StrRule) Eval(s *Scanner) bool {
@@ -497,8 +498,10 @@ func (r StrRule) Eval(s *Scanner) bool {
 			if s.This == r.end || s.This == r.escape {
 				s.Keep()
 			} else if !r.escapeRules.Eval(s) {
-				s.Illegal("invalid escape sequence: '%v%v'", r.escape, s.This)
+				s.Illegal("invalid escape sequence: '%c%c'", r.escape, s.This)
+				s.Keep()
 				r.recover(s)
+				return true
 			}
 		default:
 			s.Keep()

@@ -83,15 +83,19 @@ type Token struct {
 	Errs    Errors
 }
 
+func (t Token) IsValid() bool {
+	return t.Value != "" || t.Type != ""
+}
+
 func (t Token) String() string {
 	var b strings.Builder
 
 	if t.Pos.Line != 0 || t.Pos.Column != 0 {
 		fmt.Fprintf(&b, "%v:%v ", t.Pos.Line, t.Pos.Column)
 	}
-	fmt.Fprintf(&b, "%v %v", t.Type, replaceNewlines(t.Value))
+	fmt.Fprintf(&b, "type:%v val:%v", t.Type, Quote(t.Value))
 	if t.Literal != "" {
-		fmt.Fprintf(&b, " [lit] %v", replaceNewlines(t.Literal))
+		fmt.Fprintf(&b, " lit:%v", Quote(t.Literal))
 	}
 	if len(t.Errs) > 0 {
 		fmt.Fprintf(&b, "\n%v", t.Errs)

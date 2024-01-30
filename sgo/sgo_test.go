@@ -33,7 +33,7 @@ func TestRune(t *testing.T) {
 		scan.NewTest(`'aa'`, "a", 1, 1, scan.IllegalType).
 			WithError("1:3: error: too many characters (2)"),
 		scan.NewTest(`'\k'`, "k", 1, 1, scan.IllegalType).
-			WithError("foo"),
+			WithError(`1:3: error: invalid escape sequence: '\k'`),
 	}
 	scan.RunTests(t, rules, tests)
 }

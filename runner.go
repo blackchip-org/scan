@@ -16,7 +16,7 @@ func NewRunner(scan *Scanner, rules RuleSet) *Runner {
 }
 
 func (r *Runner) HasMore() bool {
-	return r.lookahead.Value != "" && r.lookahead.Type != ""
+	return r.lookahead.IsValid()
 }
 
 func (r *Runner) Next() Token {
