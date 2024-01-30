@@ -2,7 +2,7 @@ package scan
 
 import "fmt"
 
-func ExampleIsAny() {
+func ExampleAny() {
 	fmt.Printf("%c: %v\n", 'a', Any('a'))
 	fmt.Printf("%c: %v\n", '4', Any('4'))
 	// Output:
@@ -10,7 +10,7 @@ func ExampleIsAny() {
 	// 4: true
 }
 
-func ExampleIsCurrency() {
+func ExampleCurrency() {
 	fmt.Printf("%c: %v\n", '$', Currency('$'))
 	fmt.Printf("%c: %v\n", '€', Currency('€'))
 	fmt.Printf("%c: %v\n", '!', Currency('!'))
@@ -20,7 +20,7 @@ func ExampleIsCurrency() {
 	// !: false
 }
 
-func ExampleIsDigit() {
+func ExampleDigit() {
 	fmt.Printf("%c: %v\n", '1', Digit('1'))
 	fmt.Printf("%c: %v\n", '६', Digit('६'))
 	fmt.Printf("%c: %v\n", 'V', Digit('V'))
@@ -30,7 +30,7 @@ func ExampleIsDigit() {
 	// V: false
 }
 
-func ExampleIsDigit01() {
+func ExampleDigit01() {
 	fmt.Printf("%c: %v\n", '1', Digit01('1'))
 	fmt.Printf("%c: %v\n", '2', Digit01('2'))
 	// Output:
@@ -38,7 +38,7 @@ func ExampleIsDigit01() {
 	// 2: false
 }
 
-func ExampleIsDigit07() {
+func ExampleDigit07() {
 	fmt.Printf("%c: %v\n", '7', Digit07('7'))
 	fmt.Printf("%c: %v\n", '8', Digit07('8'))
 	// Output:
@@ -46,7 +46,7 @@ func ExampleIsDigit07() {
 	// 8: false
 }
 
-func ExampleIsDigit09() {
+func ExampleDigit09() {
 	fmt.Printf("%c: %v\n", '9', Digit09('9'))
 	fmt.Printf("%c: %v\n", 'a', Digit09('a'))
 	// Output:
@@ -54,7 +54,7 @@ func ExampleIsDigit09() {
 	// a: false
 }
 
-func ExampleIsDigit0F() {
+func ExampleDigit0F() {
 	fmt.Printf("%c: %v\n", '9', Digit0F('9'))
 	fmt.Printf("%c: %v\n", 'a', Digit0F('a'))
 	fmt.Printf("%c: %v\n", 'A', Digit0F('A'))
@@ -66,7 +66,7 @@ func ExampleIsDigit0F() {
 	// g: false
 }
 
-func ExampleIsLetter() {
+func ExampleLetter() {
 	fmt.Printf("%c: %v\n", 'á', Letter('á'))
 	fmt.Printf("%c: %v\n", '%', Letter('%'))
 	// Output:
@@ -74,7 +74,7 @@ func ExampleIsLetter() {
 	// %: false
 }
 
-func ExampleIsLetterAZ() {
+func ExampleLetterAZ() {
 	fmt.Printf("%c: %v\n", 'f', LetterAZ('f'))
 	fmt.Printf("%c: %v\n", 'F', LetterAZ('F'))
 	fmt.Printf("%c: %v\n", '4', LetterAZ('4'))
@@ -84,7 +84,7 @@ func ExampleIsLetterAZ() {
 	// 4: false
 }
 
-func ExampleIsNone() {
+func ExampleNone() {
 	fmt.Printf("%c: %v\n", 'f', None('f'))
 	fmt.Printf("%c: %v\n", 'F', None('F'))
 	fmt.Printf("%c: %v\n", '4', None('4'))

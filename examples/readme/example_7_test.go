@@ -19,22 +19,22 @@ func scanIdent(s *scan.Scanner) scan.Token {
 	return s.Emit()
 }
 
-func scanToken7(s *scan.Scanner) scan.Token {
-	switch {
-	case s.Is(scan.Digit09):
-		return scanInt(s)
-	case s.Is(scan.LetterUnder):
-		return scanIdent(s)
-	}
-	return s.Illegal("invalid character")
-}
-
 func Example_example7() {
+	scanToken := func(s *scan.Scanner) scan.Token {
+		switch {
+		case s.Is(scan.Digit09):
+			return scanInt(s)
+		case s.Is(scan.LetterUnder):
+			return scanIdent(s)
+		}
+		return s.Illegal("unexpected character")
+	}
+
 	var toks []scan.Token
 	s := scan.NewFromString("", "   1234 abcd 5678efgh!")
 	scan.While(s, scan.Whitespace, s.Discard)
 	for s.HasMore() {
-		toks = append(toks, scanToken7(s))
+		toks = append(toks, scanToken(s))
 		scan.While(s, scan.Whitespace, s.Discard)
 	}
 	fmt.Println(scan.FormatTokenTable(toks))
@@ -46,5 +46,5 @@ func Example_example7() {
 	//  1:9  ident    abcd
 	// 1:14  int      5678
 	// 1:18  ident    efgh
-	// 1:22  illegal  ! (error: invalid character)
+	// 1:22  illegal  ! (error: unexpected character)
 }

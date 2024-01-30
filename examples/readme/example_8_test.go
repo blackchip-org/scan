@@ -27,24 +27,24 @@ func scanString(s *scan.Scanner) scan.Token {
 	return s.Emit()
 }
 
-func scanToken8(s *scan.Scanner) scan.Token {
-	switch {
-	case s.Is(scan.Digit09):
-		return scanInt(s)
-	case s.Is(scan.LetterUnder):
-		return scanIdent(s)
-	case s.This == '"':
-		return scanString(s)
-	}
-	return s.Illegal("invalid character")
-}
-
 func Example_example8() {
+	scanToken := func(s *scan.Scanner) scan.Token {
+		switch {
+		case s.Is(scan.Digit09):
+			return scanInt(s)
+		case s.Is(scan.LetterUnder):
+			return scanIdent(s)
+		case s.This == '"':
+			return scanString(s)
+		}
+		return s.Illegal("unexpected character")
+	}
+
 	var toks []scan.Token
 	s := scan.NewFromString("", `   1234 abcd "hello \"world\"" 5678efgh!`)
 	scan.While(s, scan.Whitespace, s.Discard)
 	for s.HasMore() {
-		toks = append(toks, scanToken8(s))
+		toks = append(toks, scanToken(s))
 		scan.While(s, scan.Whitespace, s.Discard)
 	}
 	fmt.Println(scan.FormatTokenTable(toks))
@@ -57,5 +57,5 @@ func Example_example8() {
 	// 1:14  str      hello \"world\"
 	// 1:32  int      5678
 	// 1:36  ident    efgh
-	// 1:40  illegal  ! (error: invalid character)
+	// 1:40  illegal  ! (error: unexpected character)
 }

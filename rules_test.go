@@ -11,6 +11,16 @@ func TestBin(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
+func TestBin0b(t *testing.T) {
+	rules := Rules(Bin0b, Int)
+	tests := []TestCase{
+		NewTestCase("0b0101", "0101", 1, 1, BinType),
+		NewTestCase("0B0101", "0101", 1, 1, BinType),
+		NewTestCase("0123", "0123", 1, 1, IntType),
+	}
+	RunTests(t, rules, tests)
+}
+
 func TestHex(t *testing.T) {
 	rules := Rules(Hex)
 	tests := []TestCase{
@@ -20,16 +30,50 @@ func TestHex(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
+func TestHex0x(t *testing.T) {
+	rules := Rules(Hex0x, Int)
+	tests := []TestCase{
+		NewTestCase("0x12bc", "12bc", 1, 1, HexType),
+		NewTestCase("0X12bc", "12bc", 1, 1, HexType),
+		NewTestCase("12bc", "12", 1, 1, IntType).
+			And("b", 1, 3, IllegalType).
+			And("c", 1, 4, IllegalType),
+	}
+	RunTests(t, rules, tests)
+}
+
+func TestIdent(t *testing.T) {
+	rules := Rules(Ident.WithKeywords("true", "false"))
+	tests := []TestCase{
+		NewTestCase("abc_123", "abc_123", 1, 1, IdentType),
+		NewTestCase("_abc_123", "_abc_123", 1, 1, IdentType),
+		NewTestCase("0abc_123", "0", 1, 1, IllegalType).
+			And("abc_123", 1, 2, IdentType),
+		NewTestCase("true", "true", 1, 1, "true"),
+		NewTestCase("false", "false", 1, 1, "false"),
+	}
+	RunTests(t, rules, tests)
+}
+
 func TestInt(t *testing.T) {
 	rules := Rules(Int)
 	tests := []TestCase{
-		NewTestCase("1234567890a", "1234567890", 1, 1, IntType).
-			And("a", 1, 11, IllegalType),
-		NewTestCase("-1234", "-1234", 1, 1, IntType),
-		NewTestCase("+1234", "+1234", 1, 1, IntType),
-		NewTestCase("0x1234", "0", 1, 1, IntType).
-			And("x", 1, 2, IllegalType).
-			And("1234", 1, 3, IntType),
+		NewTestCase("12345", "12345", 1, 1, IntType),
+		NewTestCase("-1234", "-", 1, 1, IllegalType).
+			And("1234", 1, 2, IntType),
+	}
+	RunTests(t, rules, tests)
+}
+
+func TestLiterals(t *testing.T) {
+	rules := Rules(Literals("=", "===", "+", "+=", "/"))
+	tests := []TestCase{
+		NewTestCase("=", "=", 1, 1, "="),
+		NewTestCase("===", "===", 1, 1, "==="),
+		NewTestCase("==", "=", 1, 1, "=").
+			And("=", 2, 2, "="),
+		NewTestCase("+=/", "+=", 1, 1, "+=").
+			And("/", 1, 2, "/"),
 	}
 	RunTests(t, rules, tests)
 }
@@ -43,8 +87,42 @@ func TestOct(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
+func TestOct0o(t *testing.T) {
+	rules := Rules(Oct0o, Int)
+	tests := []TestCase{
+		NewTestCase("0o755", "755", 1, 1, OctType),
+		NewTestCase("0O755", "755", 1, 1, OctType),
+		NewTestCase("7558", "7558", 1, 1, IntType),
+	}
+	RunTests(t, rules, tests)
+}
+
 func TestReal(t *testing.T) {
 	rules := Rules(Real)
+	tests := []TestCase{
+		NewTestCase("12.345", "12.345", 1, 1, RealType),
+		NewTestCase("-12.34", "-", 1, 1, IllegalType).
+			And("12.34", 1, 2, RealType),
+	}
+	RunTests(t, rules, tests)
+}
+
+func TestSignedInt(t *testing.T) {
+	rules := Rules(SignedInt)
+	tests := []TestCase{
+		NewTestCase("1234567890a", "1234567890", 1, 1, IntType).
+			And("a", 1, 11, IllegalType),
+		NewTestCase("-1234", "-1234", 1, 1, IntType),
+		NewTestCase("+1234", "+1234", 1, 1, IntType),
+		NewTestCase("0x1234", "0", 1, 1, IntType).
+			And("x", 1, 2, IllegalType).
+			And("1234", 1, 3, IntType),
+	}
+	RunTests(t, rules, tests)
+}
+
+func TestSignedReal(t *testing.T) {
+	rules := Rules(SignedReal)
 	tests := []TestCase{
 		NewTestCase("1234", "1234", 1, 1, IntType),
 		NewTestCase("12.345", "12.345", 1, 1, RealType),
@@ -65,8 +143,8 @@ func TestReal(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
-func TestRealExp(t *testing.T) {
-	rules := Rules(RealExp)
+func TestSignedRealExp(t *testing.T) {
+	rules := Rules(SignedRealExp)
 	tests := []TestCase{
 		NewTestCase("123", "123", 1, 1, IntType),
 		NewTestCase("123e10", "123e10", 1, 1, RealType),
@@ -76,8 +154,8 @@ func TestRealExp(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
-func TestRealWithDigitSep(t *testing.T) {
-	rules := Rules(RealExp.WithDigitSep(Rune('_')))
+func TestSignedRealWithDigitSep(t *testing.T) {
+	rules := Rules(SignedRealExp.WithDigitSep(Rune('_')))
 	tests := []TestCase{
 		NewTestCase("1234567", "1234567", 1, 1, IntType),
 		NewTestCase("1_234_567", "1234567", 1, 1, IntType),
@@ -87,26 +165,6 @@ func TestRealWithDigitSep(t *testing.T) {
 			And("_", 1, 6, IllegalType).
 			And("_", 1, 7, IllegalType).
 			And("567", 1, 8, IntType),
-	}
-	RunTests(t, rules, tests)
-}
-
-func TestUInt(t *testing.T) {
-	rules := Rules(UInt)
-	tests := []TestCase{
-		NewTestCase("12345", "12345", 1, 1, IntType),
-		NewTestCase("-1234", "-", 1, 1, IllegalType).
-			And("1234", 1, 2, IntType),
-	}
-	RunTests(t, rules, tests)
-}
-
-func TestUReal(t *testing.T) {
-	rules := Rules(UReal)
-	tests := []TestCase{
-		NewTestCase("12.345", "12.345", 1, 1, RealType),
-		NewTestCase("-12.34", "-", 1, 1, IllegalType).
-			And("12.34", 1, 2, RealType),
 	}
 	RunTests(t, rules, tests)
 }

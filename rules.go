@@ -57,7 +57,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 			}
 		}
 		if tok.Value == "" {
-			tok = s.Illegal("invalid character")
+			tok = s.Illegal("unexpected character")
 		}
 		if r.postTokenFunc != nil {
 			tok = r.postTokenFunc(s, tok)
@@ -70,9 +70,107 @@ func (r RuleSet) Next(s *Scanner) Token {
 	return tok
 }
 
+type IdentRule struct {
+	head     Class
+	tail     Class
+	keywords map[string]struct{}
+}
+
+func NewIdentRule(head Class, tail Class) IdentRule {
+	return IdentRule{
+		head:     head,
+		tail:     tail,
+		keywords: make(map[string]struct{}),
+	}
+}
+
+func (r IdentRule) WithKeywords(ks ...string) IdentRule {
+	keywords := make(map[string]struct{})
+	for _, k := range ks {
+		keywords[k] = struct{}{}
+	}
+	r.keywords = keywords
+	return r
+}
+
+func (r IdentRule) Eval(s *Scanner) bool {
+	if !s.Is(r.head) {
+		return false
+	}
+	s.Keep()
+	While(s, r.tail, s.Keep)
+	if _, ok := r.keywords[s.Value.String()]; !ok {
+		s.Type = IdentType
+	}
+	return true
+}
+
+var (
+	Ident IdentRule = NewIdentRule(LetterUnder, LetterDigitUnder)
+)
+
+type trieNode struct {
+	children map[rune]*trieNode
+	leaf     bool
+}
+
+type LiteralRule struct {
+	lits *trieNode
+	skip bool
+}
+
+func Literals(lits ...string) LiteralRule {
+	rule := LiteralRule{lits: &trieNode{children: make(map[rune]*trieNode)}}
+	for _, lit := range lits {
+		prev := rule.lits
+		var node *trieNode
+		var ok bool
+		for _, ch := range lit {
+			node, ok = prev.children[ch]
+			if !ok {
+				node = &trieNode{children: make(map[rune]*trieNode)}
+				prev.children[ch] = node
+			}
+			prev = node
+		}
+		node.leaf = true
+	}
+	return rule
+}
+
+func (r LiteralRule) WithSkip(b bool) LiteralRule {
+	r.skip = b
+	return r
+}
+
+func (r LiteralRule) Eval(s *Scanner) bool {
+	i := 0
+	good := 0
+	prev := r.lits
+	fn := s.Keep
+	if r.skip {
+		fn = s.Skip
+	}
+
+	for {
+		ch := s.Peek(i)
+		node, ok := prev.children[ch]
+		if !ok {
+			Repeat(fn, good)
+			return good > 0
+		}
+		if node.leaf {
+			good = i + 1
+		}
+		prev = node
+		i++
+	}
+}
+
 type NumRule struct {
 	type_    string
 	digit    Class
+	prefix   Rule
 	sign     Class
 	digitSep Class
 	decSep   Class
@@ -84,6 +182,7 @@ func NewNumRule(digit Class) NumRule {
 	return NumRule{
 		digit:    digit,
 		sign:     None,
+		prefix:   TrueRule,
 		digitSep: None,
 		decSep:   None,
 		exp:      None,
@@ -98,6 +197,11 @@ func (r NumRule) WithType(t string) NumRule {
 
 func (r NumRule) WithSign(c Class) NumRule {
 	r.sign = c
+	return r
+}
+
+func (r NumRule) WithPrefix(rule Rule) NumRule {
+	r.prefix = rule
 	return r
 }
 
@@ -124,6 +228,10 @@ func (r NumRule) WithExpSign(c Class) NumRule {
 func (r NumRule) Eval(s *Scanner) bool {
 	if s.Is(r.sign) {
 		s.Keep()
+	}
+	if !r.prefix.Eval(s) {
+		s.Undo()
+		return false
 	}
 
 	s.Type = IntType
@@ -169,13 +277,24 @@ func (r NumRule) Eval(s *Scanner) bool {
 }
 
 var (
-	Bin      NumRule = NewNumRule(Digit01).WithType(BinType)
-	Hex      NumRule = NewNumRule(Digit0F).WithType(HexType)
-	Int      NumRule = UInt.WithSign(Sign)
-	Oct      NumRule = NewNumRule(Digit07).WithType(OctType)
-	Real     NumRule = UReal.WithSign(Sign)
-	RealExp  NumRule = URealExp.WithSign(Sign)
-	UInt     NumRule = NewNumRule(Digit09)
-	UReal    NumRule = UInt.WithDecSep(Rune('.'))
-	URealExp NumRule = UReal.WithExp(Rune('e', 'E')).WithExpSign(Sign)
+	Bin           NumRule = NewNumRule(Digit01).WithType(BinType)
+	Bin0b         NumRule = Bin.WithPrefix(Literals("0b", "0B").WithSkip(true))
+	Hex           NumRule = NewNumRule(Digit0F).WithType(HexType)
+	Hex0x         NumRule = Hex.WithPrefix(Literals("0x", "0X").WithSkip(true))
+	Oct           NumRule = NewNumRule(Digit07).WithType(OctType)
+	Oct0o         NumRule = Oct.WithPrefix(Literals("0o", "0O").WithSkip(true))
+	Int           NumRule = NewNumRule(Digit09)
+	Real          NumRule = Int.WithDecSep(Rune('.'))
+	RealExp       NumRule = Real.WithExp(Rune('e', 'E')).WithExpSign(Sign)
+	SignedInt     NumRule = Int.WithSign(Sign)
+	SignedReal    NumRule = Real.WithSign(Sign)
+	SignedRealExp NumRule = RealExp.WithSign(Sign)
 )
+
+type trueRule struct{}
+
+func (r trueRule) Eval(s *Scanner) bool {
+	return true
+}
+
+var TrueRule = trueRule{}
