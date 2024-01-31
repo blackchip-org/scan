@@ -6,6 +6,7 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+// replace with predefined rules
 func Example_example9() {
 	s := scan.NewFromString("", "   1234 abcd 5678efgh!")
 	rules := scan.Rules(

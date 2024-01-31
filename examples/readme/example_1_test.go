@@ -6,6 +6,7 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+// binary number
 func Example_example1() {
 	s := scan.NewFromString("", "1010234abc!")
 	for s.HasMore() {

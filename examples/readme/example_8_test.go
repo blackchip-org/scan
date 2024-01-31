@@ -6,6 +6,8 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+// add string scanning
+
 func scanString(s *scan.Scanner) scan.Token {
 	s.Type = scan.StrType
 	s.Skip() // beginning quote

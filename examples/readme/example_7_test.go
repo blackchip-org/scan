@@ -6,6 +6,8 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+// scanning ints and identifiers
+
 func scanInt(s *scan.Scanner) scan.Token {
 	s.Type = scan.IntType
 	scan.While(s, scan.Digit09, s.Keep)

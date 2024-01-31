@@ -6,6 +6,7 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+// hex integer with class constructors
 func Example_example3() {
 	digit0F := scan.Or(
 		scan.Range('0', '9'),

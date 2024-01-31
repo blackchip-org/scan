@@ -6,6 +6,7 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+// replace loop with scan.While
 func Example_example2a() {
 	digit09 := func(r rune) bool {
 		return r >= '0' && r <= '9'
