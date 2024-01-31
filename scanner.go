@@ -175,6 +175,13 @@ func (s *Scanner) Peek(i int) rune {
 	return chs[li]
 }
 
+func (s *Scanner) PeekIs(i int, c Class) bool {
+	if c == nil {
+		return false
+	}
+	return c(s.Peek(i))
+}
+
 // Keep advances the stream to the next rune and adds the current rune to
 // the token value and literal.
 func (s *Scanner) Keep() {

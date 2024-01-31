@@ -51,7 +51,7 @@ func RunTests(t *testing.T, rules RuleSet, tests []Test) {
 			scan := NewFromString("", test.src)
 			r := NewRunner(scan, rules)
 			toks := r.All()
-			t.Log(FormatTokenTable(toks))
+			t.Log("\n" + FormatTokenTable(toks))
 			for i, tok := range toks {
 				if i >= len(test.toks) {
 					break

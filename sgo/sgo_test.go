@@ -31,6 +31,54 @@ func TestCommentsKeep(t *testing.T) {
 	scan.RunTests(t, ctx.RuleSet, tests)
 }
 
+func TestFloat(t *testing.T) {
+	ctx := NewContext()
+	tests := []scan.Test{
+		scan.NewTest("0.", "0.", 1, 1, FloatType),
+		scan.NewTest("72.40", "72.40", 1, 1, FloatType),
+		scan.NewTest("072.40", "072.40", 1, 1, FloatType),
+		scan.NewTest("2.71828", "2.71828", 1, 1, FloatType),
+		scan.NewTest("1.e+0", "1.e+0", 1, 1, FloatType),
+		scan.NewTest("6.67428e-11", "6.67428e-11", 1, 1, FloatType),
+		scan.NewTest("1E6", "1E6", 1, 1, FloatType),
+		scan.NewTest(".25", ".25", 1, 1, FloatType),
+		scan.NewTest(".12345E+5", ".12345E+5", 1, 1, FloatType),
+		scan.NewTest("1_5.", "15.", 1, 1, FloatType),
+		scan.NewTest("0.15e+0_2", "0.15e+02", 1, 1, FloatType),
+		scan.NewTest("0x1p-2", "0x1p-2", 1, 1, FloatType),
+		scan.NewTest("0x2.p10", "0x2.p10", 1, 1, FloatType),
+		scan.NewTest("0x1.Fp+0", "0x1.Fp+0", 1, 1, FloatType),
+		scan.NewTest("0X.8p-0", "0X.8p-0", 1, 1, FloatType),
+		scan.NewTest("0X_1FFFP-16", "0X1FFFP-16", 1, 1, FloatType),
+		scan.NewTest("0x15e-2", "0x15e", 1, 1, IntType).
+			And("-", 1, 6, "-").
+			And("2", 1, 7, IntType),
+		scan.NewTest("0x.p1", "0", 1, 1, IntType).
+			And("x", 1, 2, IdentType).
+			And(".", 1, 3, ".").
+			And("p1", 1, 4, IdentType),
+		scan.NewTest("1p-2", "1", 1, 1, IntType).
+			And("p", 1, 2, IdentType).
+			And("-", 1, 3, "-").
+			And("2", 1, 4, IntType),
+		scan.NewTest("0x1.5e-2", "0x1.5e", 1, 1, FloatType).
+			And("-", 1, 7, "-").
+			And("2", 1, 8, IntType),
+		scan.NewTest("1_.5", "1", 1, 1, IntType).
+			And("_", 1, 2, IdentType).
+			And(".5", 1, 3, FloatType),
+		scan.NewTest("1._5", "1.", 1, 1, FloatType).
+			And("_5", 1, 3, IdentType),
+		scan.NewTest("1.5_e1", "1.5", 1, 1, FloatType).
+			And("_e1", 1, 4, IdentType),
+		scan.NewTest("1.5e_1", "1.5", 1, 1, FloatType).
+			And("e_1", 1, 4, IdentType),
+		scan.NewTest("1.5e1_", "1.5e1", 1, 1, FloatType).
+			And("_", 1, 6, IdentType),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
 func TestIdent(t *testing.T) {
 	ctx := NewContext()
 	tests := []scan.Test{
@@ -49,11 +97,11 @@ func TestInt(t *testing.T) {
 		scan.NewTest("4_2", "42", 1, 1, IntType),
 		scan.NewTest("0600", "0600", 1, 1, IntType),
 		scan.NewTest("0_600", "0600", 1, 1, IntType),
-		scan.NewTest("0o600", "600", 1, 1, OctType),
-		scan.NewTest("0O600", "600", 1, 1, OctType),
-		scan.NewTest("0xBadFace", "BadFace", 1, 1, HexType),
-		scan.NewTest("0xBad_Face", "BadFace", 1, 1, HexType),
-		scan.NewTest("0x_67_7a_2f_cc_40_c6", "677a2fcc40c6", 1, 1, HexType),
+		scan.NewTest("0o600", "0o600", 1, 1, IntType),
+		scan.NewTest("0O600", "0O600", 1, 1, IntType),
+		scan.NewTest("0xBadFace", "0xBadFace", 1, 1, IntType),
+		scan.NewTest("0xBad_Face", "0xBadFace", 1, 1, IntType),
+		scan.NewTest("0x_67_7a_2f_cc_40_c6", "0x677a2fcc40c6", 1, 1, IntType),
 		scan.NewTest("170141183460469231731687303715884105727", "170141183460469231731687303715884105727", 1, 1, IntType),
 		scan.NewTest("170_141183_460469_231731_687303_715884_105727", "170141183460469231731687303715884105727", 1, 1, IntType),
 		scan.NewTest("_42", "_42", 1, 1, IdentType),

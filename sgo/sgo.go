@@ -3,14 +3,11 @@ package sgo
 import "github.com/blackchip-org/scan"
 
 const (
-	BinType     = scan.BinType
 	CommentType = scan.CommentType
 	FloatType   = "float"
-	HexType     = scan.HexType
 	IdentType   = scan.IdentType
 	IntType     = scan.IntType
 	ImagType    = "imag"
-	OctType     = scan.OctType
 	RuneType    = "rune"
 	StringType  = "string"
 )
@@ -50,28 +47,31 @@ var (
 )
 
 var (
-	GeneralComment = scan.NewCommentRule(scan.Literals("/*"), scan.Literals("*/"))
-	Ident          = scan.Ident.WithKeywords(Keywords...)
-	Int            = scan.Rules(
-		scan.Hex0x.
-			WithIntType(HexType).
-			WithDigitSep(scan.Rune('_')).
-			WithLeadingDigitSepAllowed(true),
-		scan.Oct0o.
-			WithIntType(OctType).
-			WithDigitSep(scan.Rune('_')).
-			WithLeadingDigitSepAllowed(true),
-		scan.Bin0b.
-			WithIntType(BinType).
-			WithDigitSep(scan.Rune('_')).
-			WithLeadingDigitSepAllowed(true),
-		scan.RealExp.
+	Bin = scan.Bin0b.
+		WithIntType(IntType).
+		WithDigitSep(scan.Rune('_')).
+		WithLeadingDigitSepAllowed(true)
+	GenComment = scan.NewCommentRule(scan.Literals("/*"), scan.Literals("*/"))
+	HexFloat   = scan.NewNumRule(scan.Digit0F).
 			WithIntType(IntType).
 			WithRealType(FloatType).
-			WithDigitSep(scan.Rune('_')),
-	)
+			WithPrefix(scan.Literals("0x", "0X")).
+			WithDecSep(scan.Rune('.')).
+			WithExp(scan.Rune('p', 'P')).
+			WithExpSign(scan.Rune('+', '-')).
+			WithDigitSep(scan.Rune('_')).
+			WithLeadingDigitSepAllowed(true)
+	Ident    = scan.Ident.WithKeywords(Keywords...)
+	IntFloat = scan.RealExp.
+			WithIntType(IntType).
+			WithRealType(FloatType).
+			WithDigitSep(scan.Rune('_'))
 	LineComment = scan.NewCommentRule(scan.Literals("//"), scan.Literals("\n"))
-	RawString   = scan.NewStrRule('`', '`').
+	Oct         = scan.Oct0o.
+			WithIntType(IntType).
+			WithDigitSep(scan.Rune('_')).
+			WithLeadingDigitSepAllowed(true)
+	RawString = scan.NewStrRule('`', '`').
 			WithType(StringType).
 			WithMultiline(true)
 	Rune = scan.NewStrRule('\'', '\'').
@@ -90,9 +90,6 @@ var (
 var semiColonRequiredAfter = map[string]struct{}{
 	IdentType:  {},
 	IntType:    {},
-	BinType:    {},
-	OctType:    {},
-	HexType:    {},
 	FloatType:  {},
 	ImagType:   {},
 	RuneType:   {},
@@ -128,14 +125,17 @@ type Context struct {
 func NewContext() *Context {
 	c := &Context{}
 	c.RuleSet = scan.Rules(
-		GeneralComment.WithKeep(&c.KeepComments),
+		GenComment.WithKeep(&c.KeepComments),
 		LineComment.WithKeep(&c.KeepComments),
-		Symbols,
 		Rune,
-		Int,
+		HexFloat,
+		Oct,
+		Bin,
+		IntFloat,
 		String,
 		RawString,
 		Ident,
+		Symbols,
 	).
 		WithDiscards(Whitespace).
 		WithPostTokenFunc(AutoSemiInsertion())

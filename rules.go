@@ -426,7 +426,8 @@ func (r NumRule) Eval(s *Scanner) bool {
 		return false
 	}
 
-	if s.Is(r.exp) {
+	if s.Is(r.exp) && (s.NextIs(r.digit) ||
+		(s.NextIs(r.expSign) && s.PeekIs(2, r.digit))) {
 		s.Type = RealType
 		if r.realType != "" {
 			s.Type = r.realType
@@ -442,11 +443,11 @@ func (r NumRule) Eval(s *Scanner) bool {
 
 var (
 	Bin           NumRule = NewNumRule(Digit01).WithIntType(BinType)
-	Bin0b         NumRule = Bin.WithPrefix(Literals("0b", "0B").WithSkip(true))
+	Bin0b         NumRule = Bin.WithPrefix(Literals("0b", "0B"))
 	Hex           NumRule = NewNumRule(Digit0F).WithIntType(HexType)
-	Hex0x         NumRule = Hex.WithPrefix(Literals("0x", "0X").WithSkip(true))
+	Hex0x         NumRule = Hex.WithPrefix(Literals("0x", "0X"))
 	Oct           NumRule = NewNumRule(Digit07).WithIntType(OctType)
-	Oct0o         NumRule = Oct.WithPrefix(Literals("0o", "0O").WithSkip(true))
+	Oct0o         NumRule = Oct.WithPrefix(Literals("0o", "0O"))
 	Int           NumRule = NewNumRule(Digit09)
 	Real          NumRule = Int.WithDecSep(Rune('.'))
 	RealExp       NumRule = Real.WithExp(Rune('e', 'E')).WithExpSign(Sign)

@@ -15,8 +15,8 @@ func TestBin(t *testing.T) {
 func TestBin0b(t *testing.T) {
 	rules := Rules(Bin0b, Int)
 	tests := []Test{
-		NewTest("0b0101", "0101", 1, 1, BinType),
-		NewTest("0B0101", "0101", 1, 1, BinType),
+		NewTest("0b0101", "0b0101", 1, 1, BinType),
+		NewTest("0B0101", "0B0101", 1, 1, BinType),
 		NewTest("0123", "0123", 1, 1, IntType),
 	}
 	RunTests(t, rules, tests)
@@ -35,8 +35,8 @@ func TestHex(t *testing.T) {
 func TestHex0x(t *testing.T) {
 	rules := Rules(Hex0x, Int)
 	tests := []Test{
-		NewTest("0x12bc", "12bc", 1, 1, HexType),
-		NewTest("0X12bc", "12bc", 1, 1, HexType),
+		NewTest("0x12bc", "0x12bc", 1, 1, HexType),
+		NewTest("0X12bc", "0X12bc", 1, 1, HexType),
 		NewTest("12bc", "12", 1, 1, IntType).
 			And("b", 1, 3, IllegalType).
 			WithError(`1:3: error: unexpected "b"`).
@@ -97,8 +97,8 @@ func TestOct(t *testing.T) {
 func TestOct0o(t *testing.T) {
 	rules := Rules(Oct0o, Int)
 	tests := []Test{
-		NewTest("0o755", "755", 1, 1, OctType),
-		NewTest("0O755", "755", 1, 1, OctType),
+		NewTest("0o755", "0o755", 1, 1, OctType),
+		NewTest("0O755", "0O755", 1, 1, OctType),
 		NewTest("7558", "7558", 1, 1, IntType),
 	}
 	RunTests(t, rules, tests)
