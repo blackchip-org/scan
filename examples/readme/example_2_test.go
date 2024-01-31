@@ -17,7 +17,7 @@ func Example_example2() {
 		s.Keep()
 	}
 	tok := s.Emit()
-	fmt.Println(tok.Value)
+	fmt.Println(tok.Val)
 
 	// Output:
 	// 1010234

@@ -113,6 +113,25 @@ func TestInt(t *testing.T) {
 	scan.RunTests(t, ctx.RuleSet, tests)
 }
 
+func TestImag(t *testing.T) {
+	ctx := NewContext()
+	tests := []scan.Test{
+		scan.NewTest("0i", "0i", 1, 1, ImagType),
+		scan.NewTest("0123i", "0123i", 1, 1, ImagType),
+		scan.NewTest("0o123i", "0o123i", 1, 1, ImagType),
+		scan.NewTest("0xabci", "0xabci", 1, 1, ImagType),
+		scan.NewTest("0.i", "0.i", 1, 1, ImagType),
+		scan.NewTest("2.71828i", "2.71828i", 1, 1, ImagType),
+		scan.NewTest("1.e+0i", "1.e+0i", 1, 1, ImagType),
+		scan.NewTest("6.67428e-11i", "6.67428e-11i", 1, 1, ImagType),
+		scan.NewTest("1E6i", "1E6i", 1, 1, ImagType),
+		scan.NewTest(".25i", ".25i", 1, 1, ImagType),
+		scan.NewTest(".12345E+5i", ".12345E+5i", 1, 1, ImagType),
+		scan.NewTest("0x1p-2i", "0x1p-2i", 1, 1, ImagType),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
 func TestKeywords(t *testing.T) {
 	ctx := NewContext()
 	tests := []scan.Test{
@@ -193,6 +212,8 @@ func TestSemiColons(t *testing.T) {
 		scan.NewTest("a++\n42", "a", 1, 1, IdentType).
 			And("++", 1, 2, "++").
 			And(";", 1, 4, ";").
+			And("42", 2, 1, IntType),
+		scan.NewTest("case\n42", "case", 1, 1, "case").
 			And("42", 2, 1, IntType),
 	}
 	scan.RunTests(t, ctx.RuleSet, tests)

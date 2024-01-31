@@ -73,7 +73,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 		if r.postTokenFunc != nil {
 			tok = r.postTokenFunc(s, tok)
 		}
-		if tok.Value != "" && tok.Type != "" {
+		if tok.Val != "" && tok.Type != "" {
 			break
 		}
 	}
@@ -267,7 +267,7 @@ type LiteralRule struct {
 	skip bool
 }
 
-func Literals(lits ...string) LiteralRule {
+func Literal(lits ...string) LiteralRule {
 	rule := LiteralRule{lits: &trieNode{children: make(map[rune]*trieNode)}}
 	for _, lit := range lits {
 		prev := rule.lits
@@ -325,6 +325,7 @@ type NumRule struct {
 	decSep                 Class
 	exp                    Class
 	expSign                Class
+	suffix                 []Rule
 	leadingDigitSepAllowed bool
 }
 
@@ -372,6 +373,11 @@ func (r NumRule) WithExp(c Class) NumRule {
 
 func (r NumRule) WithExpSign(c Class) NumRule {
 	r.expSign = c
+	return r
+}
+
+func (r NumRule) WithSuffix(rules ...Rule) NumRule {
+	r.suffix = rules
 	return r
 }
 
@@ -438,16 +444,22 @@ func (r NumRule) Eval(s *Scanner) bool {
 		}
 		scanDigits()
 	}
+
+	for _, r := range r.suffix {
+		if r.Eval(s) {
+			break
+		}
+	}
 	return true
 }
 
 var (
 	Bin           NumRule = NewNumRule(Digit01).WithIntType(BinType)
-	Bin0b         NumRule = Bin.WithPrefix(Literals("0b", "0B"))
+	Bin0b         NumRule = Bin.WithPrefix(Literal("0b", "0B"))
 	Hex           NumRule = NewNumRule(Digit0F).WithIntType(HexType)
-	Hex0x         NumRule = Hex.WithPrefix(Literals("0x", "0X"))
+	Hex0x         NumRule = Hex.WithPrefix(Literal("0x", "0X"))
 	Oct           NumRule = NewNumRule(Digit07).WithIntType(OctType)
-	Oct0o         NumRule = Oct.WithPrefix(Literals("0o", "0O"))
+	Oct0o         NumRule = Oct.WithPrefix(Literal("0o", "0O"))
 	Int           NumRule = NewNumRule(Digit09)
 	Real          NumRule = Int.WithDecSep(Rune('.'))
 	RealExp       NumRule = Real.WithExp(Rune('e', 'E')).WithExpSign(Sign)

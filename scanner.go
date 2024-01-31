@@ -31,22 +31,22 @@ const (
 
 // Pos represents a position within an input stream.
 type Pos struct {
-	Name   string `json:",omitempty"`
-	Line   int
-	Column int
+	Name string `json:"name,omitempty"`
+	Line int    `json:"line"`
+	Col  int    `json:"col"`
 }
 
 // NewPos returns a new position with the given name and the line number
 // and column number set to one.
 func NewPos(name string) Pos {
-	return Pos{Name: name, Line: 1, Column: 1}
+	return Pos{Name: name, Line: 1, Col: 1}
 }
 
 func (p Pos) String() string {
 	if p.Name != "" {
-		return fmt.Sprintf("%v:%v:%v", p.Name, p.Line, p.Column)
+		return fmt.Sprintf("%v:%v:%v", p.Name, p.Line, p.Col)
 	}
-	return fmt.Sprintf("%v:%v", p.Line, p.Column)
+	return fmt.Sprintf("%v:%v", p.Line, p.Col)
 }
 
 type Error struct {
@@ -77,26 +77,26 @@ func (es Errors) Error() string {
 }
 
 type Token struct {
-	Value   string
-	Literal string `json:",omitempty"`
-	Type    string
-	Pos     Pos
-	Errs    Errors
+	Val  string `json:"val"`
+	Lit  string `json:"lit,omitempty"`
+	Type string `json:"type"`
+	Pos  Pos    `json:"pos"`
+	Errs Errors `json:"errs,omitempty"`
 }
 
 func (t Token) IsValid() bool {
-	return t.Value != "" || t.Type != ""
+	return t.Val != "" || t.Type != ""
 }
 
 func (t Token) String() string {
 	var b strings.Builder
 
-	if t.Pos.Line != 0 || t.Pos.Column != 0 {
-		fmt.Fprintf(&b, "%v:%v ", t.Pos.Line, t.Pos.Column)
+	if t.Pos.Line != 0 || t.Pos.Col != 0 {
+		fmt.Fprintf(&b, "%v:%v ", t.Pos.Line, t.Pos.Col)
 	}
-	fmt.Fprintf(&b, "type:%v val:%v", t.Type, Quote(t.Value))
-	if t.Literal != "" {
-		fmt.Fprintf(&b, " lit:%v", Quote(t.Literal))
+	fmt.Fprintf(&b, "type:%v val:%v", t.Type, Quote(t.Val))
+	if t.Lit != "" {
+		fmt.Fprintf(&b, " lit:%v", Quote(t.Lit))
 	}
 	if len(t.Errs) > 0 {
 		fmt.Fprintf(&b, "\n%v", t.Errs)
@@ -229,13 +229,13 @@ func (s *Scanner) Undo() {
 func (s *Scanner) Emit() Token {
 	var t Token
 
-	t.Value = s.Val.String()
-	t.Literal = s.Lit.String()
+	t.Val = s.Val.String()
+	t.Lit = s.Lit.String()
 	t.Type = s.Type
 	t.Pos = s.tokPos
 	t.Errs = s.Errs
 
-	if t.Literal == "" && s.srcErr != nil {
+	if t.Lit == "" && s.srcErr != nil {
 		t.Type = ErrorType
 		t.Errs = append(t.Errs, *s.srcErr)
 		return t
@@ -243,7 +243,7 @@ func (s *Scanner) Emit() Token {
 
 	// If there are no type yet, set it to the value
 	if t.Type == "" {
-		t.Type = t.Value
+		t.Type = t.Val
 	}
 
 	s.Val.Reset()
@@ -269,9 +269,9 @@ func (s *Scanner) next() {
 	}
 	if s.This == '\n' {
 		s.thisPos.Line++
-		s.thisPos.Column = 1
+		s.thisPos.Col = 1
 	} else {
-		s.thisPos.Column++
+		s.thisPos.Col++
 	}
 
 	var err error

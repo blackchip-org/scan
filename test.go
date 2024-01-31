@@ -15,11 +15,11 @@ func NewTest(src string, val string, line int, col int, type_ string) Test {
 	return Test{
 		src: src,
 		toks: []Token{{
-			Value: val,
-			Type:  type_,
+			Val:  val,
+			Type: type_,
 			Pos: Pos{
-				Line:   line,
-				Column: col,
+				Line: line,
+				Col:  col,
 			}},
 		},
 		errs: [][]string{nil},
@@ -34,11 +34,11 @@ func (t Test) WithError(message string) Test {
 
 func (t Test) And(val string, line int, col int, type_ string) Test {
 	t.toks = append(t.toks, Token{
-		Value: val,
-		Type:  type_,
+		Val:  val,
+		Type: type_,
 		Pos: Pos{
-			Line:   line,
-			Column: col,
+			Line: line,
+			Col:  col,
 		},
 	})
 	t.errs = append(t.errs, nil)
@@ -57,7 +57,7 @@ func RunTests(t *testing.T, rules RuleSet, tests []Test) {
 					break
 				}
 				testTok := test.toks[i]
-				if tok.Value != testTok.Value || tok.Type != testTok.Type || tok.Pos != testTok.Pos {
+				if tok.Val != testTok.Val || tok.Type != testTok.Type || tok.Pos != testTok.Pos {
 					t.Fatalf("\n have: %v \n want: %v", tok, testTok)
 				}
 				if len(test.errs) > 0 {

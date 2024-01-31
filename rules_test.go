@@ -72,7 +72,7 @@ func TestInt(t *testing.T) {
 }
 
 func TestLiterals(t *testing.T) {
-	rules := Rules(Literals("=", "===", "+", "+=", "/"))
+	rules := Rules(Literal("=", "===", "+", "+=", "/"))
 	tests := []Test{
 		NewTest("=", "=", 1, 1, "="),
 		NewTest("===", "===", 1, 1, "==="),

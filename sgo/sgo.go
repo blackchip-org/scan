@@ -6,8 +6,9 @@ const (
 	CommentType = scan.CommentType
 	FloatType   = "float"
 	IdentType   = scan.IdentType
-	IntType     = scan.IntType
+	IllegalType = scan.IllegalType
 	ImagType    = "imag"
+	IntType     = scan.IntType
 	RuneType    = "rune"
 	StringType  = "string"
 )
@@ -50,27 +51,31 @@ var (
 	Bin = scan.Bin0b.
 		WithIntType(IntType).
 		WithDigitSep(scan.Rune('_')).
-		WithLeadingDigitSepAllowed(true)
-	GenComment = scan.NewCommentRule(scan.Literals("/*"), scan.Literals("*/"))
+		WithLeadingDigitSepAllowed(true).
+		WithSuffix(ImagSuffix)
+	GenComment = scan.NewCommentRule(scan.Literal("/*"), scan.Literal("*/"))
 	HexFloat   = scan.NewNumRule(scan.Digit0F).
 			WithIntType(IntType).
 			WithRealType(FloatType).
-			WithPrefix(scan.Literals("0x", "0X")).
+			WithPrefix(scan.Literal("0x", "0X")).
 			WithDecSep(scan.Rune('.')).
 			WithExp(scan.Rune('p', 'P')).
 			WithExpSign(scan.Rune('+', '-')).
 			WithDigitSep(scan.Rune('_')).
-			WithLeadingDigitSepAllowed(true)
+			WithLeadingDigitSepAllowed(true).
+			WithSuffix(ImagSuffix)
 	Ident    = scan.Ident.WithKeywords(Keywords...)
 	IntFloat = scan.RealExp.
 			WithIntType(IntType).
 			WithRealType(FloatType).
-			WithDigitSep(scan.Rune('_'))
-	LineComment = scan.NewCommentRule(scan.Literals("//"), scan.Literals("\n"))
+			WithDigitSep(scan.Rune('_')).
+			WithSuffix(ImagSuffix)
+	LineComment = scan.NewCommentRule(scan.Literal("//"), scan.Literal("\n"))
 	Oct         = scan.Oct0o.
 			WithIntType(IntType).
 			WithDigitSep(scan.Rune('_')).
-			WithLeadingDigitSepAllowed(true)
+			WithLeadingDigitSepAllowed(true).
+			WithSuffix(ImagSuffix)
 	RawString = scan.NewStrRule('`', '`').
 			WithType(StringType).
 			WithMultiline(true)
@@ -83,22 +88,26 @@ var (
 		WithType(StringType).
 		WithEscape('\\').
 		WithEscapeRules(EscapeRules...)
-	Symbols    = scan.Literals(OpsPunct...)
+	Symbols    = scan.Literal(OpsPunct...)
 	Whitespace = scan.Rune(' ', '\t', '\r')
 )
 
 var semiColonRequiredAfter = map[string]struct{}{
-	IdentType:  {},
-	IntType:    {},
-	FloatType:  {},
-	ImagType:   {},
-	RuneType:   {},
-	StringType: {},
-	"++":       {},
-	"--":       {},
-	")":        {},
-	"]":        {},
-	"}":        {},
+	IdentType:     {},
+	IntType:       {},
+	FloatType:     {},
+	ImagType:      {},
+	RuneType:      {},
+	StringType:    {},
+	"break":       {},
+	"continue":    {},
+	"fallthrough": {},
+	"return":      {},
+	"++":          {},
+	"--":          {},
+	")":           {},
+	"]":           {},
+	"}":           {},
 }
 
 func AutoSemiInsertion() func(*scan.Scanner, scan.Token) scan.Token {
@@ -107,7 +116,7 @@ func AutoSemiInsertion() func(*scan.Scanner, scan.Token) scan.Token {
 		if t.Type == "\n" {
 			if _, yes := semiColonRequiredAfter[last.Type]; yes {
 				t.Type = ";"
-				t.Value = ";"
+				t.Val = ";"
 			} else {
 				t = scan.Token{Type: scan.EmptyType}
 			}
@@ -116,6 +125,19 @@ func AutoSemiInsertion() func(*scan.Scanner, scan.Token) scan.Token {
 		return t
 	}
 }
+
+type ImagSuffixRule struct{}
+
+func (r ImagSuffixRule) Eval(s *scan.Scanner) bool {
+	if s.Is(scan.Rune('i')) {
+		s.Keep()
+		s.Type = ImagType
+		return true
+	}
+	return false
+}
+
+var ImagSuffix = ImagSuffixRule{}
 
 type Context struct {
 	KeepComments bool

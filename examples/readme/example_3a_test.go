@@ -11,7 +11,7 @@ func Example_example3a() {
 	s := scan.NewFromString("", "1010234abc!")
 	scan.While(s, scan.Digit0F, s.Keep)
 	tok := s.Emit()
-	fmt.Println(tok.Value)
+	fmt.Println(tok.Val)
 
 	// Output:
 	// 1010234abc

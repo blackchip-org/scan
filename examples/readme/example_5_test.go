@@ -12,7 +12,7 @@ func Example_example5() {
 	scan.While(s, scan.Whitespace, s.Discard)
 	scan.While(s, scan.Digit0F, s.Keep)
 	tok := s.Emit()
-	fmt.Println(tok.Value)
+	fmt.Println(tok.Val)
 
 	// Output:
 	// 1010234abc

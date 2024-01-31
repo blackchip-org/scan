@@ -22,8 +22,8 @@ func TestKeep(t *testing.T) {
 			s := NewFromString("", src)
 			Repeat(s.Keep, test.n)
 			have := s.Emit()
-			if have.Value != test.value {
-				t.Errorf("\n have: [%v] \n want: [%v]", have.Value, test.value)
+			if have.Val != test.value {
+				t.Errorf("\n have: [%v] \n want: [%v]", have.Val, test.value)
 			}
 		})
 	}
@@ -38,8 +38,8 @@ func TestUndo(t *testing.T) {
 	While(s, Any, s.Keep)
 	tok := s.Emit()
 	want := "abcd"
-	if tok.Value != want {
-		t.Errorf("\n have: %v \n want: %v", tok.Value, want)
+	if tok.Val != want {
+		t.Errorf("\n have: %v \n want: %v", tok.Val, want)
 	}
 }
 
@@ -74,7 +74,7 @@ func TestEmpty(t *testing.T) {
 	s := NewFromString("", "")
 	s.Keep()
 	tok := s.Emit()
-	if tok.Value != "" || tok.Type != "" {
+	if tok.Val != "" || tok.Type != "" {
 		t.Error(tok)
 	}
 }

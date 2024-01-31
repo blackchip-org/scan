@@ -82,10 +82,10 @@ func FormatTokenTable(ts []Token) string {
 	for _, t := range ts {
 		posLen = max(posLen, utf8.RuneCountInString(t.Pos.String()))
 		typeLen = max(typeLen, utf8.RuneCountInString(t.Type))
-		valLen = max(valLen, utf8.RuneCountInString(Quote(t.Value)))
-		litLen = max(litLen, utf8.RuneCountInString(Quote(t.Literal)))
+		valLen = max(valLen, utf8.RuneCountInString(Quote(t.Val)))
+		litLen = max(litLen, utf8.RuneCountInString(Quote(t.Lit)))
 	}
-	line := fmt.Sprintf("%*s  %-*s  %-*s  %-*s",
+	line := fmt.Sprintf("%-*s  %-*s  %-*s  %-*s",
 		posLen, posHeading,
 		typeLen, typeHeading,
 		valLen, valHeading,
@@ -94,11 +94,11 @@ func FormatTokenTable(ts []Token) string {
 	out.WriteString(strings.TrimRight(line, " "))
 	out.WriteRune('\n')
 	for _, t := range ts {
-		line := fmt.Sprintf("%*s  %-*s  %-*s  %-*s",
+		line := fmt.Sprintf("%-*s  %-*s  %-*s  %-*s",
 			posLen, t.Pos.String(),
 			typeLen, t.Type,
-			valLen, Quote(t.Value),
-			litLen, Quote(t.Literal),
+			valLen, Quote(t.Val),
+			litLen, Quote(t.Lit),
 		)
 		out.WriteString(strings.TrimRight(line, " "))
 		out.WriteRune('\n')

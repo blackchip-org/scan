@@ -21,9 +21,9 @@ func Example_example9() {
 
 	// Output:
 	//
-	//  Pos  Type     Value            Literal
-	//  1:4  int      "1234"           "1234"
-	//  1:9  ident    "abcd"           "abcd"
+	// Pos   Type     Value            Literal
+	// 1:4   int      "1234"           "1234"
+	// 1:9   ident    "abcd"           "abcd"
 	// 1:14  str      'hello "world"'  '"hello \"world\""'
 	// 1:32  int      "5678"           "5678"
 	// 1:36  ident    "efgh"           "efgh"

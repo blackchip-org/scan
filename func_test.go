@@ -16,8 +16,8 @@ func TestRepeat(t *testing.T) {
 		t.Run(test.val, func(t *testing.T) {
 			Repeat(s.Keep, test.n)
 			tok := s.Emit()
-			if tok.Value != test.val {
-				t.Errorf("\n have: %v \n want: %v", tok.Value, test.val)
+			if tok.Val != test.val {
+				t.Errorf("\n have: %v \n want: %v", tok.Val, test.val)
 			}
 		})
 	}
@@ -39,8 +39,8 @@ func TestWhile(t *testing.T) {
 		t.Run(test.val, func(t *testing.T) {
 			While(s, test.class, test.fn)
 			tok := s.Emit()
-			if tok.Value != test.val {
-				t.Errorf("\n have: %v \n want: %v", tok.Value, test.val)
+			if tok.Val != test.val {
+				t.Errorf("\n have: %v \n want: %v", tok.Val, test.val)
 			}
 		})
 	}
