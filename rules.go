@@ -271,30 +271,32 @@ func (r LiteralRule) Eval(s *Scanner) bool {
 }
 
 type NumRule struct {
-	type_    string
-	digit    Class
-	prefix   Rule
-	sign     Class
-	digitSep Class
-	decSep   Class
-	exp      Class
-	expSign  Class
+	intType                string
+	realType               string
+	digit                  Class
+	prefix                 Rule
+	sign                   Class
+	digitSep               Class
+	decSep                 Class
+	exp                    Class
+	expSign                Class
+	leadingDigitSepAllowed bool
 }
 
 func NewNumRule(digit Class) NumRule {
 	return NumRule{
-		digit:    digit,
-		sign:     None,
-		prefix:   TrueRule,
-		digitSep: None,
-		decSep:   None,
-		exp:      None,
-		expSign:  None,
+		digit:  digit,
+		prefix: TrueRule,
 	}
 }
 
-func (r NumRule) WithType(t string) NumRule {
-	r.type_ = t
+func (r NumRule) WithIntType(t string) NumRule {
+	r.intType = t
+	return r
+}
+
+func (r NumRule) WithRealType(t string) NumRule {
+	r.realType = t
 	return r
 }
 
@@ -328,6 +330,11 @@ func (r NumRule) WithExpSign(c Class) NumRule {
 	return r
 }
 
+func (r NumRule) WithLeadingDigitSepAllowed(b bool) NumRule {
+	r.leadingDigitSepAllowed = b
+	return r
+}
+
 func (r NumRule) Eval(s *Scanner) bool {
 	if s.Is(r.sign) {
 		s.Keep()
@@ -336,8 +343,14 @@ func (r NumRule) Eval(s *Scanner) bool {
 		s.Undo()
 		return false
 	}
+	if s.Is(r.digitSep) && r.leadingDigitSepAllowed {
+		s.Skip()
+	}
 
 	s.Type = IntType
+	if r.intType != "" {
+		s.Type = r.intType
+	}
 	seenDigit := false
 	scanDigits := func() {
 		for s.HasMore() {
@@ -356,6 +369,9 @@ func (r NumRule) Eval(s *Scanner) bool {
 	scanDigits()
 	if s.Is(r.decSep) {
 		s.Type = RealType
+		if r.realType != "" {
+			s.Type = r.realType
+		}
 		s.Keep()
 		scanDigits()
 	}
@@ -367,24 +383,24 @@ func (r NumRule) Eval(s *Scanner) bool {
 
 	if s.Is(r.exp) {
 		s.Type = RealType
+		if r.realType != "" {
+			s.Type = r.realType
+		}
 		s.Keep()
 		if s.Is(r.expSign) {
 			s.Keep()
 		}
 		scanDigits()
 	}
-	if r.type_ != "" {
-		s.Type = r.type_
-	}
 	return true
 }
 
 var (
-	Bin           NumRule = NewNumRule(Digit01).WithType(BinType)
+	Bin           NumRule = NewNumRule(Digit01).WithIntType(BinType)
 	Bin0b         NumRule = Bin.WithPrefix(Literals("0b", "0B").WithSkip(true))
-	Hex           NumRule = NewNumRule(Digit0F).WithType(HexType)
+	Hex           NumRule = NewNumRule(Digit0F).WithIntType(HexType)
 	Hex0x         NumRule = Hex.WithPrefix(Literals("0x", "0X").WithSkip(true))
-	Oct           NumRule = NewNumRule(Digit07).WithType(OctType)
+	Oct           NumRule = NewNumRule(Digit07).WithIntType(OctType)
 	Oct0o         NumRule = Oct.WithPrefix(Literals("0o", "0O").WithSkip(true))
 	Int           NumRule = NewNumRule(Digit09)
 	Real          NumRule = Int.WithDecSep(Rune('.'))

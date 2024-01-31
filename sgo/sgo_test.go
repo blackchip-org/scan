@@ -6,6 +6,29 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+func TestInt(t *testing.T) {
+	rules := scan.Rules(Ident, Int)
+	tests := []scan.Test{
+		scan.NewTest("42", "42", 1, 1, IntType),
+		scan.NewTest("4_2", "42", 1, 1, IntType),
+		scan.NewTest("0600", "0600", 1, 1, IntType),
+		scan.NewTest("0_600", "0600", 1, 1, IntType),
+		scan.NewTest("0o600", "600", 1, 1, OctType),
+		scan.NewTest("0O600", "600", 1, 1, OctType),
+		scan.NewTest("0xBadFace", "BadFace", 1, 1, HexType),
+		scan.NewTest("0xBad_Face", "BadFace", 1, 1, HexType),
+		scan.NewTest("0x_67_7a_2f_cc_40_c6", "677a2fcc40c6", 1, 1, HexType),
+		scan.NewTest("170141183460469231731687303715884105727", "170141183460469231731687303715884105727", 1, 1, IntType),
+		scan.NewTest("170_141183_460469_231731_687303_715884_105727", "170141183460469231731687303715884105727", 1, 1, IntType),
+		scan.NewTest("_42", "_42", 1, 1, IdentType),
+		scan.NewTest("4__2", "4", 1, 1, IntType).
+			And("__2", 1, 2, IdentType),
+		scan.NewTest("0_xBadFace", "0", 1, 1, IntType).
+			And("_xBadFace", 1, 2, IdentType),
+	}
+	scan.RunTests(t, rules, tests)
+}
+
 func TestRawString(t *testing.T) {
 	rules := scan.Rules(RawString)
 	tests := []scan.Test{
@@ -58,9 +81,9 @@ func TestString(t *testing.T) {
 		scan.NewTest(`"\u65e5本\U00008a9e"`, "日本語", 1, 1, StringType),
 		scan.NewTest(`"\xff\u00FF"`, "ÿÿ", 1, 1, StringType),
 		scan.NewTest(`"\uD800"`, "D800", 1, 1, scan.IllegalType).
-			WithError(`1:4: error: not valid: "D800"`),
+			WithError(`1:4: error: invalid encoding: "D800"`),
 		scan.NewTest(`"\U00110000"`, "00110000", 1, 1, scan.IllegalType).
-			WithError(`1:4: error: not valid: "00110000"`),
+			WithError(`1:4: error: invalid encoding: "00110000"`),
 	}
 	scan.RunTests(t, rules, tests)
 }
