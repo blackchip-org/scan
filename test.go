@@ -51,12 +51,13 @@ func RunTests(t *testing.T, rules RuleSet, tests []Test) {
 			scan := NewFromString("", test.src)
 			r := NewRunner(scan, rules)
 			toks := r.All()
+			t.Log(FormatTokenTable(toks))
 			for i, tok := range toks {
 				if i >= len(test.toks) {
 					break
 				}
 				testTok := test.toks[i]
-				if tok.Value != testTok.Value || tok.Type != testTok.Type {
+				if tok.Value != testTok.Value || tok.Type != testTok.Type || tok.Pos != testTok.Pos {
 					t.Fatalf("\n have: %v \n want: %v", tok, testTok)
 				}
 				if len(test.errs) > 0 {

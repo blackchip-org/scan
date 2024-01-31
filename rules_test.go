@@ -6,7 +6,7 @@ func TestBin(t *testing.T) {
 	rules := Rules(Bin)
 	tests := []Test{
 		NewTest("012", "01", 1, 1, BinType).
-			And("2", 1, 1, IllegalType).
+			And("2", 1, 3, IllegalType).
 			WithError(`1:3: error: unexpected "2"`),
 	}
 	RunTests(t, rules, tests)
@@ -77,9 +77,9 @@ func TestLiterals(t *testing.T) {
 		NewTest("=", "=", 1, 1, "="),
 		NewTest("===", "===", 1, 1, "==="),
 		NewTest("==", "=", 1, 1, "=").
-			And("=", 2, 2, "="),
+			And("=", 1, 2, "="),
 		NewTest("+=/", "+=", 1, 1, "+=").
-			And("/", 1, 2, "/"),
+			And("/", 1, 3, "/"),
 	}
 	RunTests(t, rules, tests)
 }
@@ -144,9 +144,9 @@ func TestSignedReal(t *testing.T) {
 			WithError(`1:8: error: unexpected "e"`).
 			And("10", 1, 9, IntType),
 		NewTest("-12.34.5", "-12.34", 1, 1, RealType).
-			And(".5", 1, 6, RealType),
+			And(".5", 1, 7, RealType),
 		NewTest("-12.34-5", "-12.34", 1, 1, RealType).
-			And("-5", 1, 6, IntType),
+			And("-5", 1, 7, IntType),
 		NewTest("1_234", "1", 1, 1, IntType).
 			And("_", 1, 2, IllegalType).
 			WithError(`1:2: error: unexpected "_"`).

@@ -62,6 +62,9 @@ func (r RuleSet) Next(s *Scanner) Token {
 				break
 			}
 		}
+		if tok.Type == EmptyType {
+			continue
+		}
 		if !tok.IsValid() {
 			s.Illegal("unexpected %s", QuoteRune(s.This))
 			s.Keep()
@@ -120,6 +123,48 @@ func (r CharEncRule) Eval(s *Scanner) bool {
 	s.Lit.WriteRune(s.This)
 	s.Val.WriteRune(to)
 	s.Skip()
+	return true
+}
+
+type CommentRule struct {
+	begin LiteralRule
+	end   LiteralRule
+	keep  *bool
+}
+
+func NewCommentRule(begin LiteralRule, end LiteralRule) CommentRule {
+	var keep bool
+	return CommentRule{
+		begin: begin.WithSkip(true),
+		end:   end.WithSkip(true),
+		keep:  &keep,
+	}
+}
+
+func (r CommentRule) WithKeep(keep *bool) CommentRule {
+	r.keep = keep
+	return r
+}
+
+func (r CommentRule) Eval(s *Scanner) bool {
+	if !r.begin.Eval(s) {
+		return false
+	}
+	if *r.keep {
+		s.Type = CommentType
+	} else {
+		s.Type = EmptyType
+	}
+	for s.HasMore() {
+		if r.end.Eval(s) {
+			return true
+		}
+		if *r.keep {
+			s.Keep()
+		} else {
+			s.Skip()
+		}
+	}
 	return true
 }
 

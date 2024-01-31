@@ -45,11 +45,11 @@ func Example_example7() {
 
 	// Output:
 	//
-	//  Pos  Type     Value
-	//  1:4  int      1234
-	//  1:9  ident    abcd
-	// 1:14  int      5678
-	// 1:18  ident    efgh
-	// 1:22  illegal  !
+	//  Pos  Type     Value   Literal
+	//  1:4  int      "1234"  "1234"
+	//  1:9  ident    "abcd"  "abcd"
+	// 1:14  int      "5678"  "5678"
+	// 1:18  ident    "efgh"  "efgh"
+	// 1:22  illegal  "!"     "!"
 	// 1:22: error: unexpected "!"
 }

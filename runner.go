@@ -2,14 +2,14 @@ package scan
 
 type Runner struct {
 	scan      *Scanner
-	rules     RuleSet
+	Rules     RuleSet
 	lookahead Token
 }
 
 func NewRunner(scan *Scanner, rules RuleSet) *Runner {
 	r := &Runner{
 		scan:  scan,
-		rules: rules,
+		Rules: rules,
 	}
 	r.lookahead = rules.Next(scan)
 	return r
@@ -23,7 +23,7 @@ func (r *Runner) Next() Token {
 	this := r.lookahead
 	r.lookahead = Token{}
 	if r.scan.HasMore() {
-		r.lookahead = r.rules.Next(r.scan)
+		r.lookahead = r.Rules.Next(r.scan)
 	}
 	return this
 }

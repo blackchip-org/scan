@@ -25,9 +25,6 @@ func TestKeep(t *testing.T) {
 			if have.Value != test.value {
 				t.Errorf("\n have: [%v] \n want: [%v]", have.Value, test.value)
 			}
-			if have.Literal != "" {
-				t.Errorf("\n have: [%v] \n want: empty literal", have.Literal)
-			}
 		})
 	}
 }

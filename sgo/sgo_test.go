@@ -6,8 +6,44 @@ import (
 	"github.com/blackchip-org/scan"
 )
 
+func TestComments(t *testing.T) {
+	ctx := NewContext()
+	tests := []scan.Test{
+		scan.NewTest("abc // cde \n fgh", "abc", 1, 1, IdentType).
+			And("fgh", 2, 2, IdentType),
+		scan.NewTest("abc /* cde \n fgh */ ijk", "abc", 1, 1, IdentType).
+			And("ijk", 2, 9, IdentType),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
+func TestCommentsKeep(t *testing.T) {
+	ctx := NewContext()
+	ctx.KeepComments = true
+	tests := []scan.Test{
+		scan.NewTest("abc // cde \n fgh", "abc", 1, 1, IdentType).
+			And(" cde ", 1, 5, CommentType).
+			And("fgh", 2, 2, IdentType),
+		scan.NewTest("abc /* cde \n fgh */ ijk", "abc", 1, 1, IdentType).
+			And(" cde \n fgh ", 1, 5, CommentType).
+			And("ijk", 2, 9, IdentType),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
+func TestIdent(t *testing.T) {
+	ctx := NewContext()
+	tests := []scan.Test{
+		scan.NewTest("a", "a", 1, 1, IdentType),
+		scan.NewTest("_x9", "_x9", 1, 1, IdentType),
+		scan.NewTest("ThisVariableIsExported", "ThisVariableIsExported", 1, 1, IdentType),
+		scan.NewTest("αβ", "αβ", 1, 1, IdentType),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
 func TestInt(t *testing.T) {
-	rules := scan.Rules(Ident, Int)
+	ctx := NewContext()
 	tests := []scan.Test{
 		scan.NewTest("42", "42", 1, 1, IntType),
 		scan.NewTest("4_2", "42", 1, 1, IntType),
@@ -26,20 +62,52 @@ func TestInt(t *testing.T) {
 		scan.NewTest("0_xBadFace", "0", 1, 1, IntType).
 			And("_xBadFace", 1, 2, IdentType),
 	}
-	scan.RunTests(t, rules, tests)
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
+func TestKeywords(t *testing.T) {
+	ctx := NewContext()
+	tests := []scan.Test{
+		scan.NewTest("break", "break", 1, 1, "break"),
+		scan.NewTest("case", "case", 1, 1, "case"),
+		scan.NewTest("chan", "chan", 1, 1, "chan"),
+		scan.NewTest("const", "const", 1, 1, "const"),
+		scan.NewTest("continue", "continue", 1, 1, "continue"),
+		scan.NewTest("default", "default", 1, 1, "default"),
+		scan.NewTest("defer", "defer", 1, 1, "defer"),
+		scan.NewTest("else", "else", 1, 1, "else"),
+		scan.NewTest("fallthrough", "fallthrough", 1, 1, "fallthrough"),
+		scan.NewTest("for", "for", 1, 1, "for"),
+		scan.NewTest("func", "func", 1, 1, "func"),
+		scan.NewTest("go", "go", 1, 1, "go"),
+		scan.NewTest("goto", "goto", 1, 1, "goto"),
+		scan.NewTest("if", "if", 1, 1, "if"),
+		scan.NewTest("import", "import", 1, 1, "import"),
+		scan.NewTest("interface", "interface", 1, 1, "interface"),
+		scan.NewTest("map", "map", 1, 1, "map"),
+		scan.NewTest("package", "package", 1, 1, "package"),
+		scan.NewTest("range", "range", 1, 1, "range"),
+		scan.NewTest("return", "return", 1, 1, "return"),
+		scan.NewTest("select", "select", 1, 1, "select"),
+		scan.NewTest("struct", "struct", 1, 1, "struct"),
+		scan.NewTest("switch", "switch", 1, 1, "switch"),
+		scan.NewTest("type", "type", 1, 1, "type"),
+		scan.NewTest("var", "var", 1, 1, "var"),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
 }
 
 func TestRawString(t *testing.T) {
-	rules := scan.Rules(RawString)
+	ctx := NewContext()
 	tests := []scan.Test{
 		scan.NewTest("`abc`", "abc", 1, 1, StringType),
 		scan.NewTest("`\\n\n\\n`", "\\n\n\\n", 1, 1, StringType),
 	}
-	scan.RunTests(t, rules, tests)
+	scan.RunTests(t, ctx.RuleSet, tests)
 }
 
 func TestRune(t *testing.T) {
-	rules := scan.Rules(Rune)
+	ctx := NewContext()
 	tests := []scan.Test{
 		scan.NewTest(`'a'`, "a", 1, 1, RuneType),
 		scan.NewTest(`'ä'`, "ä", 1, 1, RuneType),
@@ -68,11 +136,22 @@ func TestRune(t *testing.T) {
 		scan.NewTest(`'\U00110000'`, "00110000", 1, 1, scan.IllegalType).
 			WithError(`1:4: error: invalid encoding: "00110000"`),
 	}
-	scan.RunTests(t, rules, tests)
+	scan.RunTests(t, ctx.RuleSet, tests)
+}
+
+func TestSemiColons(t *testing.T) {
+	ctx := NewContext()
+	tests := []scan.Test{
+		scan.NewTest("a++\n42", "a", 1, 1, IdentType).
+			And("++", 1, 2, "++").
+			And(";", 1, 4, ";").
+			And("42", 2, 1, IntType),
+	}
+	scan.RunTests(t, ctx.RuleSet, tests)
 }
 
 func TestString(t *testing.T) {
-	rules := scan.Rules(String)
+	ctx := NewContext()
 	tests := []scan.Test{
 		scan.NewTest(`"abc"`, `abc`, 1, 1, StringType),
 		scan.NewTest(`"\a\b\f\n\r\t\v\\\""`, "\a\b\f\n\r\t\v\\\"", 1, 1, StringType),
@@ -85,5 +164,5 @@ func TestString(t *testing.T) {
 		scan.NewTest(`"\U00110000"`, "00110000", 1, 1, scan.IllegalType).
 			WithError(`1:4: error: invalid encoding: "00110000"`),
 	}
-	scan.RunTests(t, rules, tests)
+	scan.RunTests(t, ctx.RuleSet, tests)
 }

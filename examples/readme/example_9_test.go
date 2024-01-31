@@ -21,12 +21,12 @@ func Example_example9() {
 
 	// Output:
 	//
-	//  Pos  Type     Value
-	//  1:4  int      1234
-	//  1:9  ident    abcd
-	// 1:14  str      hello "world"
-	// 1:32  int      5678
-	// 1:36  ident    efgh
-	// 1:40  illegal  !
+	//  Pos  Type     Value            Literal
+	//  1:4  int      "1234"           "1234"
+	//  1:9  ident    "abcd"           "abcd"
+	// 1:14  str      'hello "world"'  '"hello \"world\""'
+	// 1:32  int      "5678"           "5678"
+	// 1:36  ident    "efgh"           "efgh"
+	// 1:40  illegal  "!"              "!"
 	// 1:40: error: unexpected "!"
 }

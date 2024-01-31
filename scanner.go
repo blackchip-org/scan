@@ -7,7 +7,6 @@ import (
 	"io"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/blackchip-org/scan/peek"
 )
@@ -18,6 +17,8 @@ const (
 
 const (
 	BinType     = "bin"
+	CommentType = "comment"
+	EmptyType   = "empty"
 	ErrorType   = "error"
 	HexType     = "hex"
 	IdentType   = "ident"
@@ -233,10 +234,6 @@ func (s *Scanner) Emit() Token {
 		return t
 	}
 
-	// Only include the literal if it differs from the value
-	if t.Value == t.Literal {
-		t.Literal = ""
-	}
 	// If there are no type yet, set it to the value
 	if t.Type == "" {
 		t.Type = t.Value
@@ -286,45 +283,4 @@ func (s *Scanner) next() {
 		}
 		s.Next = EndOfText
 	}
-}
-
-func FormatTokenTable(ts []Token) string {
-	var out strings.Builder
-
-	pos := "Pos"
-	type_ := "Type"
-	val := "Value"
-
-	posLen := utf8.RuneCountInString(pos)
-	typeLen := utf8.RuneCountInString(type_)
-	valLen := utf8.RuneCountInString(val)
-	for _, t := range ts {
-		posLen = max(posLen, utf8.RuneCountInString(t.Pos.String()))
-		typeLen = max(typeLen, utf8.RuneCountInString(t.Type))
-		valLen = max(valLen, utf8.RuneCountInString(t.Value))
-	}
-	line := fmt.Sprintf("%*s  %-*s  %-*s",
-		posLen, pos,
-		typeLen, type_,
-		valLen, val,
-	)
-	out.WriteString(strings.TrimRight(line, " "))
-	out.WriteRune('\n')
-	for _, t := range ts {
-		line := fmt.Sprintf("%*s  %-*s  %-*s",
-			posLen, t.Pos.String(),
-			typeLen, t.Type,
-			valLen, replaceNewlines(t.Value),
-		)
-		out.WriteString(strings.TrimRight(line, " "))
-		out.WriteRune('\n')
-		if len(t.Errs) > 0 {
-			fmt.Fprintln(&out, t.Errs)
-		}
-	}
-	return out.String()
-}
-
-func replaceNewlines(s string) string {
-	return strings.ReplaceAll(s, "\n", "\u21B5")
 }

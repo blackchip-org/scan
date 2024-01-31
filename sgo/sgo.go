@@ -3,14 +3,16 @@ package sgo
 import "github.com/blackchip-org/scan"
 
 const (
-	BinType    = "bin"
-	FloatType  = "float"
-	HexType    = "hex"
-	IdentType  = "ident"
-	IntType    = "int"
-	OctType    = "oct"
-	RuneType   = "rune"
-	StringType = "string"
+	BinType     = scan.BinType
+	CommentType = scan.CommentType
+	FloatType   = "float"
+	HexType     = scan.HexType
+	IdentType   = scan.IdentType
+	IntType     = scan.IntType
+	ImagType    = "imag"
+	OctType     = scan.OctType
+	RuneType    = "rune"
+	StringType  = "string"
 )
 
 var (
@@ -36,11 +38,21 @@ var (
 		"interface", "map", "package", "range", "return",
 		"select", "struct", "switch", "type", "var",
 	}
+	OpsPunct = []string{
+		"+", "&", "+=", "&=", "&&", "==", "!=", "(", ")",
+		"-", "|", "-=", "|=", "||", "<", "<=", "[", "]",
+		"*", "^", "*=", "^=", "<-", ">", ">=", "{", "}",
+		"/", "<<", "/=", "<<=", "++", "=", ":=", ",", ";",
+		"%", ">>", "%=", ">>=", "--", "!", "...", ".", ":",
+		"&^", "&^=", "~",
+		"\n",
+	}
 )
 
 var (
-	Ident = scan.Ident.WithKeywords(Keywords...)
-	Int   = scan.Rules(
+	GeneralComment = scan.NewCommentRule(scan.Literals("/*"), scan.Literals("*/"))
+	Ident          = scan.Ident.WithKeywords(Keywords...)
+	Int            = scan.Rules(
 		scan.Hex0x.
 			WithIntType(HexType).
 			WithDigitSep(scan.Rune('_')).
@@ -58,7 +70,8 @@ var (
 			WithRealType(FloatType).
 			WithDigitSep(scan.Rune('_')),
 	)
-	RawString = scan.NewStrRule('`', '`').
+	LineComment = scan.NewCommentRule(scan.Literals("//"), scan.Literals("\n"))
+	RawString   = scan.NewStrRule('`', '`').
 			WithType(StringType).
 			WithMultiline(true)
 	Rune = scan.NewStrRule('\'', '\'').
@@ -70,4 +83,61 @@ var (
 		WithType(StringType).
 		WithEscape('\\').
 		WithEscapeRules(EscapeRules...)
+	Symbols    = scan.Literals(OpsPunct...)
+	Whitespace = scan.Rune(' ', '\t', '\r')
 )
+
+var semiColonRequiredAfter = map[string]struct{}{
+	IdentType:  {},
+	IntType:    {},
+	BinType:    {},
+	OctType:    {},
+	HexType:    {},
+	FloatType:  {},
+	ImagType:   {},
+	RuneType:   {},
+	StringType: {},
+	"++":       {},
+	"--":       {},
+	")":        {},
+	"]":        {},
+	"}":        {},
+}
+
+func AutoSemiInsertion() func(*scan.Scanner, scan.Token) scan.Token {
+	var last scan.Token
+	return func(_ *scan.Scanner, t scan.Token) scan.Token {
+		if t.Type == "\n" {
+			if _, yes := semiColonRequiredAfter[last.Type]; yes {
+				t.Type = ";"
+				t.Value = ";"
+			} else {
+				t = scan.Token{Type: scan.EmptyType}
+			}
+		}
+		last = t
+		return t
+	}
+}
+
+type Context struct {
+	KeepComments bool
+	RuleSet      scan.RuleSet
+}
+
+func NewContext() *Context {
+	c := &Context{}
+	c.RuleSet = scan.Rules(
+		GeneralComment.WithKeep(&c.KeepComments),
+		LineComment.WithKeep(&c.KeepComments),
+		Symbols,
+		Rune,
+		Int,
+		String,
+		RawString,
+		Ident,
+	).
+		WithDiscards(Whitespace).
+		WithPostTokenFunc(AutoSemiInsertion())
+	return c
+}
