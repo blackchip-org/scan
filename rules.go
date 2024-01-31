@@ -117,8 +117,8 @@ func (r CharEncRule) Eval(s *Scanner) bool {
 	if !ok {
 		return false
 	}
-	s.Literal.WriteRune(s.This)
-	s.Value.WriteRune(to)
+	s.Lit.WriteRune(s.This)
+	s.Val.WriteRune(to)
 	s.Skip()
 	return true
 }
@@ -142,20 +142,28 @@ func (r HexEncRule) Eval(s *Scanner) bool {
 	s.Skip()
 	digits := make([]rune, r.digits)
 	for i := 0; i < r.digits; i++ {
+		ch := s.Peek(i)
+		if !Digit0F(ch) {
+			s.Illegal("invalid encoding: %v", Quote(string(digits[:i])))
+			Repeat(s.Keep, i)
+			return true
+		}
 		digits[i] = s.Peek(i)
 	}
 	val, err := strconv.ParseUint(string(digits), 16, 32)
 	if err != nil {
 		s.Illegal("invalid encoding: %v", Quote(string(digits)))
+		Repeat(s.Keep, r.digits)
 		return true
 	}
 	ch := rune(val)
 	if !utf8.ValidRune(ch) {
-		s.Illegal("not valid: %v", Quote(string(digits)))
+		s.Illegal("invalid encoding: %v", Quote(string(digits)))
+		Repeat(s.Keep, r.digits)
 		return true
 	}
 	Repeat(s.Skip, r.digits)
-	s.Value.WriteRune(ch)
+	s.Val.WriteRune(ch)
 	return true
 }
 
@@ -194,7 +202,7 @@ func (r IdentRule) Eval(s *Scanner) bool {
 	}
 	s.Keep()
 	While(s, r.tail, s.Keep)
-	if _, ok := r.keywords[s.Value.String()]; !ok {
+	if _, ok := r.keywords[s.Val.String()]; !ok {
 		s.Type = IdentType
 	}
 	return true
@@ -399,15 +407,22 @@ func (r OctEncRule) Eval(s *Scanner) bool {
 	}
 	digits := make([]rune, 3)
 	for i := 0; i < 3; i++ {
-		digits[i] = s.Peek(i)
+		ch := s.Peek(i)
+		if !Digit07(ch) {
+			s.Illegal("invalid encoding: %v", Quote(string(digits[:i])))
+			Repeat(s.Keep, i)
+			return true
+		}
+		digits[i] = ch
 	}
 	val, err := strconv.ParseUint(string(digits), 8, 8)
 	if err != nil {
-		s.Illegal("invalid encoding: '%v'", string(digits))
+		s.Illegal("invalid encoding: %v", Quote(string(digits)))
+		Repeat(s.Keep, 3)
 		return true
 	}
 	Repeat(s.Skip, 3)
-	s.Value.WriteRune(rune(val))
+	s.Val.WriteRune(rune(val))
 	return true
 }
 
@@ -500,6 +515,9 @@ func (r StrRule) Eval(s *Scanner) bool {
 			} else if !r.escapeRules.Eval(s) {
 				s.Illegal("invalid escape sequence: '%c%c'", r.escape, s.This)
 				s.Keep()
+				r.recover(s)
+				return true
+			} else if len(s.Errs) > 0 {
 				r.recover(s)
 				return true
 			}

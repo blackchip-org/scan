@@ -34,6 +34,16 @@ func TestRune(t *testing.T) {
 			WithError("1:3: error: too many characters (2)"),
 		scan.NewTest(`'\k'`, "k", 1, 1, scan.IllegalType).
 			WithError(`1:3: error: invalid escape sequence: '\k'`),
+		scan.NewTest(`'\xa'`, "a", 1, 1, scan.IllegalType).
+			WithError(`1:4: error: invalid encoding: "a"`),
+		scan.NewTest(`'\0'`, "0", 1, 1, scan.IllegalType).
+			WithError(`1:3: error: invalid encoding: "0"`),
+		scan.NewTest(`'\400'`, "400", 1, 1, scan.IllegalType).
+			WithError(`1:3: error: invalid encoding: "400"`),
+		scan.NewTest(`'\uDFFF'`, "DFFF", 1, 1, scan.IllegalType).
+			WithError(`1:4: error: invalid encoding: "DFFF"`),
+		scan.NewTest(`'\U00110000'`, "00110000", 1, 1, scan.IllegalType).
+			WithError(`1:4: error: invalid encoding: "00110000"`),
 	}
 	scan.RunTests(t, rules, tests)
 }

@@ -106,10 +106,10 @@ func (t Token) String() string {
 type Scanner struct {
 	This    rune
 	Next    rune
-	Value   strings.Builder
-	Literal strings.Builder
+	Val     strings.Builder
+	Lit     strings.Builder
+	Errs    Errors
 	Type    string
-	errs    Errors
 	src     *peek.Reader
 	srcErr  *Error
 	thisPos Pos
@@ -166,7 +166,7 @@ func (s *Scanner) Peek(i int) rune {
 		}
 		return ch
 	}
-	chs := []rune(s.Literal.String())
+	chs := []rune(s.Lit.String())
 	li := len(chs) + i
 	if li < 0 {
 		return EndOfText
@@ -178,8 +178,8 @@ func (s *Scanner) Peek(i int) rune {
 // the token value and literal.
 func (s *Scanner) Keep() {
 	if s.This != EndOfText {
-		s.Value.WriteRune(s.This)
-		s.Literal.WriteRune(s.This)
+		s.Val.WriteRune(s.This)
+		s.Lit.WriteRune(s.This)
 		s.next()
 	}
 }
@@ -187,7 +187,7 @@ func (s *Scanner) Keep() {
 // Skip advances the string to the next rune without adding the current rune to
 // the token value. This current rune is written to the literal value.
 func (s *Scanner) Skip() {
-	s.Literal.WriteRune(s.This)
+	s.Lit.WriteRune(s.This)
 	s.next()
 }
 
@@ -199,7 +199,7 @@ func (s *Scanner) Discard() {
 }
 
 func (s *Scanner) Undo() {
-	chs := []rune(s.Literal.String())
+	chs := []rune(s.Lit.String())
 	slices.Reverse(chs)
 	for _, ch := range chs {
 		if s.Next != EndOfText {
@@ -210,8 +210,8 @@ func (s *Scanner) Undo() {
 		}
 		s.This = ch
 	}
-	s.Value.Reset()
-	s.Literal.Reset()
+	s.Val.Reset()
+	s.Lit.Reset()
 	s.Type = ""
 	s.thisPos = s.tokPos
 }
@@ -221,11 +221,11 @@ func (s *Scanner) Undo() {
 func (s *Scanner) Emit() Token {
 	var t Token
 
-	t.Value = s.Value.String()
-	t.Literal = s.Literal.String()
+	t.Value = s.Val.String()
+	t.Literal = s.Lit.String()
 	t.Type = s.Type
 	t.Pos = s.tokPos
-	t.Errs = s.errs
+	t.Errs = s.Errs
 
 	if t.Literal == "" && s.srcErr != nil {
 		t.Type = ErrorType
@@ -242,10 +242,10 @@ func (s *Scanner) Emit() Token {
 		t.Type = t.Value
 	}
 
-	s.Value.Reset()
-	s.Literal.Reset()
+	s.Val.Reset()
+	s.Lit.Reset()
 	s.Type = ""
-	s.errs = nil
+	s.Errs = nil
 	s.tokPos = s.thisPos
 
 	return t
@@ -253,7 +253,7 @@ func (s *Scanner) Emit() Token {
 
 func (s *Scanner) Illegal(format string, args ...any) {
 	s.Type = IllegalType
-	s.errs = append(s.errs, Error{
+	s.Errs = append(s.Errs, Error{
 		Pos:     s.thisPos,
 		Message: fmt.Sprintf(format, args...),
 	})
