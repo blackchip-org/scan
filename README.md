@@ -333,3 +333,13 @@ now discards any whitespace found at the beginning of the stream:
 [Example 5](doc/example_5_test.go)
 ```
 
+## To be continued...
+
+## Status
+
+This package is still a work in progress and is subject to change. If you
+find this useful, please drop a line at zc at blackchip dot org.
+
+## License
+
+MIT
