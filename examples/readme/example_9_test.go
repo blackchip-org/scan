@@ -9,7 +9,7 @@ import (
 // replace with predefined rules
 func Example_example9() {
 	s := scan.NewFromString("", `   1234 abcd "hello \"world\"" 5678efgh!`)
-	rules := scan.Rules(
+	rules := scan.NewRuleSet(
 		scan.StrDoubleQuote,
 		scan.Int,
 		scan.Ident,

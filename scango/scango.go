@@ -1,4 +1,4 @@
-package sgo
+package scango
 
 import "github.com/blackchip-org/scan"
 
@@ -146,7 +146,7 @@ type Context struct {
 
 func NewContext() *Context {
 	c := &Context{}
-	c.RuleSet = scan.Rules(
+	c.RuleSet = scan.NewRuleSet(
 		GenComment.WithKeep(&c.KeepComments),
 		LineComment.WithKeep(&c.KeepComments),
 		Rune,

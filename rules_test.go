@@ -3,7 +3,7 @@ package scan
 import "testing"
 
 func TestBin(t *testing.T) {
-	rules := Rules(Bin)
+	rules := NewRuleSet(Bin)
 	tests := []Test{
 		NewTest("012", "01", 1, 1, BinType).
 			And("2", 1, 3, IllegalType).
@@ -13,7 +13,7 @@ func TestBin(t *testing.T) {
 }
 
 func TestBin0b(t *testing.T) {
-	rules := Rules(Bin0b, Int)
+	rules := NewRuleSet(Bin0b, Int)
 	tests := []Test{
 		NewTest("0b0101", "0b0101", 1, 1, BinType),
 		NewTest("0B0101", "0B0101", 1, 1, BinType),
@@ -23,7 +23,7 @@ func TestBin0b(t *testing.T) {
 }
 
 func TestHex(t *testing.T) {
-	rules := Rules(Hex)
+	rules := NewRuleSet(Hex)
 	tests := []Test{
 		NewTest("0123456789abcdefg", "0123456789abcdef", 1, 1, HexType).
 			And("g", 1, 17, IllegalType).
@@ -33,7 +33,7 @@ func TestHex(t *testing.T) {
 }
 
 func TestHex0x(t *testing.T) {
-	rules := Rules(Hex0x, Int)
+	rules := NewRuleSet(Hex0x, Int)
 	tests := []Test{
 		NewTest("0x12bc", "0x12bc", 1, 1, HexType),
 		NewTest("0X12bc", "0X12bc", 1, 1, HexType),
@@ -47,7 +47,7 @@ func TestHex0x(t *testing.T) {
 }
 
 func TestIdent(t *testing.T) {
-	rules := Rules(Ident.WithKeywords("true", "false"))
+	rules := NewRuleSet(Ident.WithKeywords("true", "false"))
 	tests := []Test{
 		NewTest("abc_123", "abc_123", 1, 1, IdentType),
 		NewTest("_abc_123", "_abc_123", 1, 1, IdentType),
@@ -61,7 +61,7 @@ func TestIdent(t *testing.T) {
 }
 
 func TestInt(t *testing.T) {
-	rules := Rules(Int)
+	rules := NewRuleSet(Int)
 	tests := []Test{
 		NewTest("12345", "12345", 1, 1, IntType),
 		NewTest("-1234", "-", 1, 1, IllegalType).
@@ -72,7 +72,7 @@ func TestInt(t *testing.T) {
 }
 
 func TestLiterals(t *testing.T) {
-	rules := Rules(Literal("=", "===", "+", "+=", "/"))
+	rules := NewRuleSet(Literal("=", "===", "+", "+=", "/"))
 	tests := []Test{
 		NewTest("=", "=", 1, 1, "="),
 		NewTest("===", "===", 1, 1, "==="),
@@ -85,7 +85,7 @@ func TestLiterals(t *testing.T) {
 }
 
 func TestOct(t *testing.T) {
-	rules := Rules(Oct)
+	rules := NewRuleSet(Oct)
 	tests := []Test{
 		NewTest("012345678", "01234567", 1, 1, OctType).
 			And("8", 1, 9, IllegalType).
@@ -95,7 +95,7 @@ func TestOct(t *testing.T) {
 }
 
 func TestOct0o(t *testing.T) {
-	rules := Rules(Oct0o, Int)
+	rules := NewRuleSet(Oct0o, Int)
 	tests := []Test{
 		NewTest("0o755", "0o755", 1, 1, OctType),
 		NewTest("0O755", "0O755", 1, 1, OctType),
@@ -105,7 +105,7 @@ func TestOct0o(t *testing.T) {
 }
 
 func TestReal(t *testing.T) {
-	rules := Rules(Real)
+	rules := NewRuleSet(Real)
 	tests := []Test{
 		NewTest("12.345", "12.345", 1, 1, RealType),
 		NewTest("-12.34", "-", 1, 1, IllegalType).
@@ -116,7 +116,7 @@ func TestReal(t *testing.T) {
 }
 
 func TestSignedInt(t *testing.T) {
-	rules := Rules(SignedInt)
+	rules := NewRuleSet(SignedInt)
 	tests := []Test{
 		NewTest("1234567890a", "1234567890", 1, 1, IntType).
 			And("a", 1, 11, IllegalType).
@@ -132,7 +132,7 @@ func TestSignedInt(t *testing.T) {
 }
 
 func TestSignedReal(t *testing.T) {
-	rules := Rules(SignedReal)
+	rules := NewRuleSet(SignedReal)
 	tests := []Test{
 		NewTest("1234", "1234", 1, 1, IntType),
 		NewTest("12.345", "12.345", 1, 1, RealType),
@@ -156,7 +156,7 @@ func TestSignedReal(t *testing.T) {
 }
 
 func TestSignedRealExp(t *testing.T) {
-	rules := Rules(SignedRealExp)
+	rules := NewRuleSet(SignedRealExp)
 	tests := []Test{
 		NewTest("123", "123", 1, 1, IntType),
 		NewTest("123e10", "123e10", 1, 1, RealType),
@@ -167,7 +167,7 @@ func TestSignedRealExp(t *testing.T) {
 }
 
 func TestSignedRealWithDigitSep(t *testing.T) {
-	rules := Rules(SignedRealExp.WithDigitSep(Rune('_')))
+	rules := NewRuleSet(SignedRealExp.WithDigitSep(Rune('_')))
 	tests := []Test{
 		NewTest("1234567", "1234567", 1, 1, IntType),
 		NewTest("1_234_567", "1234567", 1, 1, IntType),
@@ -184,7 +184,7 @@ func TestSignedRealWithDigitSep(t *testing.T) {
 }
 
 func TestStr(t *testing.T) {
-	rules := Rules(
+	rules := NewRuleSet(
 		StrDoubleQuote,
 		StrSingleQuote,
 	)

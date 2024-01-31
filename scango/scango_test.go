@@ -1,4 +1,4 @@
-package sgo
+package scango
 
 import (
 	"testing"
@@ -188,19 +188,19 @@ func TestRune(t *testing.T) {
 		scan.NewTest(`'\u12e4'`, "ዤ", 1, 1, RuneType),
 		scan.NewTest(`'\U00101234'`, "\U00101234", 1, 1, RuneType),
 		scan.NewTest(`'\''`, `'`, 1, 1, RuneType),
-		scan.NewTest(`'aa'`, "a", 1, 1, scan.IllegalType).
+		scan.NewTest(`'aa'`, "a", 1, 1, IllegalType).
 			WithError("1:3: error: too many characters (2)"),
-		scan.NewTest(`'\k'`, "k", 1, 1, scan.IllegalType).
+		scan.NewTest(`'\k'`, "k", 1, 1, IllegalType).
 			WithError(`1:3: error: invalid escape sequence: '\k'`),
-		scan.NewTest(`'\xa'`, "a", 1, 1, scan.IllegalType).
+		scan.NewTest(`'\xa'`, "a", 1, 1, IllegalType).
 			WithError(`1:4: error: invalid encoding: "a"`),
-		scan.NewTest(`'\0'`, "0", 1, 1, scan.IllegalType).
+		scan.NewTest(`'\0'`, "0", 1, 1, IllegalType).
 			WithError(`1:3: error: invalid encoding: "0"`),
-		scan.NewTest(`'\400'`, "400", 1, 1, scan.IllegalType).
+		scan.NewTest(`'\400'`, "400", 1, 1, IllegalType).
 			WithError(`1:3: error: invalid encoding: "400"`),
-		scan.NewTest(`'\uDFFF'`, "DFFF", 1, 1, scan.IllegalType).
+		scan.NewTest(`'\uDFFF'`, "DFFF", 1, 1, IllegalType).
 			WithError(`1:4: error: invalid encoding: "DFFF"`),
-		scan.NewTest(`'\U00110000'`, "00110000", 1, 1, scan.IllegalType).
+		scan.NewTest(`'\U00110000'`, "00110000", 1, 1, IllegalType).
 			WithError(`1:4: error: invalid encoding: "00110000"`),
 	}
 	scan.RunTests(t, ctx.RuleSet, tests)
@@ -228,9 +228,9 @@ func TestString(t *testing.T) {
 		scan.NewTest(`"日本語"`, "日本語", 1, 1, StringType),
 		scan.NewTest(`"\u65e5本\U00008a9e"`, "日本語", 1, 1, StringType),
 		scan.NewTest(`"\xff\u00FF"`, "ÿÿ", 1, 1, StringType),
-		scan.NewTest(`"\uD800"`, "D800", 1, 1, scan.IllegalType).
+		scan.NewTest(`"\uD800"`, "D800", 1, 1, IllegalType).
 			WithError(`1:4: error: invalid encoding: "D800"`),
-		scan.NewTest(`"\U00110000"`, "00110000", 1, 1, scan.IllegalType).
+		scan.NewTest(`"\U00110000"`, "00110000", 1, 1, IllegalType).
 			WithError(`1:4: error: invalid encoding: "00110000"`),
 	}
 	scan.RunTests(t, ctx.RuleSet, tests)

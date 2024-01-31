@@ -17,7 +17,7 @@ type RuleSet struct {
 	postTokenFunc func(*Scanner, Token) Token
 }
 
-func Rules(rules ...Rule) RuleSet {
+func NewRuleSet(rules ...Rule) RuleSet {
 	return RuleSet{
 		rules:    rules,
 		discards: Whitespace,
@@ -327,12 +327,16 @@ type NumRule struct {
 	expSign                Class
 	suffix                 []Rule
 	leadingDigitSepAllowed bool
+	leadingZeroAllowed     bool
+	emptyPartsAllowed      bool
 }
 
 func NewNumRule(digit Class) NumRule {
 	return NumRule{
-		digit:  digit,
-		prefix: TrueRule,
+		digit:              digit,
+		prefix:             TrueRule,
+		leadingZeroAllowed: true,
+		emptyPartsAllowed:  true,
 	}
 }
 
@@ -386,6 +390,16 @@ func (r NumRule) WithLeadingDigitSepAllowed(b bool) NumRule {
 	return r
 }
 
+func (r NumRule) WithLeadingZeroAllowed(b bool) NumRule {
+	r.leadingZeroAllowed = false
+	return r
+}
+
+func (r NumRule) WithEmptyPartsAllowed(b bool) NumRule {
+	r.emptyPartsAllowed = b
+	return r
+}
+
 func (r NumRule) Eval(s *Scanner) bool {
 	if s.Is(r.sign) {
 		s.Keep()
@@ -402,6 +416,14 @@ func (r NumRule) Eval(s *Scanner) bool {
 	if r.intType != "" {
 		s.Type = r.intType
 	}
+
+	if !r.leadingZeroAllowed && s.This == '0' {
+		if !s.NextIs(r.decSep) && !s.NextIs(r.exp) {
+			s.Keep()
+			return true
+		}
+	}
+
 	seenDigit := false
 	scanDigits := func() {
 		for s.HasMore() {
@@ -419,6 +441,15 @@ func (r NumRule) Eval(s *Scanner) bool {
 
 	scanDigits()
 	if s.Is(r.decSep) {
+		if !r.emptyPartsAllowed {
+			if !seenDigit {
+				s.Undo()
+				return false
+			}
+			if !s.NextIs(r.digit) {
+				return true
+			}
+		}
 		s.Type = RealType
 		if r.realType != "" {
 			s.Type = r.realType
@@ -516,7 +547,7 @@ func NewStrRule(begin rune, end rune) StrRule {
 	return StrRule{
 		begin:       begin,
 		end:         end,
-		escapeRules: Rules(),
+		escapeRules: NewRuleSet(),
 	}
 }
 
@@ -531,7 +562,7 @@ func (r StrRule) WithEscape(rn rune) StrRule {
 }
 
 func (r StrRule) WithEscapeRules(rules ...Rule) StrRule {
-	r.escapeRules = Rules(rules...)
+	r.escapeRules = NewRuleSet(rules...)
 	return r
 }
 

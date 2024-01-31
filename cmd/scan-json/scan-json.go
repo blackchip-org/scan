@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/blackchip-org/scan"
-	"github.com/blackchip-org/scan/scango"
+	"github.com/blackchip-org/scan/scanjson"
 )
 
 var jsonOutput bool
@@ -29,7 +29,7 @@ func main() {
 	defer f.Close()
 
 	s := scan.New(flag.Arg(0), f)
-	ctx := scango.NewContext()
+	ctx := scanjson.NewContext()
 	r := scan.NewRunner(s, ctx.RuleSet)
 	toks := r.All()
 	if jsonOutput {
