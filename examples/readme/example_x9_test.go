@@ -8,7 +8,7 @@ import (
 
 // replace with predefined rules
 func Example_example9() {
-	s := scan.NewFromString("", `   1234 abcd "hello \"world\"" 5678efgh!`)
+	s := scan.NewScannerFromString("", `   1234 abcd "hello \"world\"" 5678efgh!`)
 	rules := scan.NewRuleSet(
 		scan.StrDoubleQuote,
 		scan.Int,

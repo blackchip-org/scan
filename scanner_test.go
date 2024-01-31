@@ -19,7 +19,7 @@ func TestKeep(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.value, func(t *testing.T) {
-			s := NewFromString("", src)
+			s := NewScannerFromString("", src)
 			Repeat(s.Keep, test.n)
 			have := s.Emit()
 			if have.Val != test.value {
@@ -30,7 +30,7 @@ func TestKeep(t *testing.T) {
 }
 
 func TestUndo(t *testing.T) {
-	s := NewFromString("", "123abcd")
+	s := NewScannerFromString("", "123abcd")
 	While(s, Digit, s.Discard)
 	s.Keep()
 	s.Keep()
@@ -44,7 +44,7 @@ func TestUndo(t *testing.T) {
 }
 
 func TestPeek(t *testing.T) {
-	s := NewFromString("", "xyz0123")
+	s := NewScannerFromString("", "xyz0123")
 	tests := []struct {
 		i  int
 		ch rune
@@ -71,7 +71,7 @@ func TestPeek(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	s := NewFromString("", "")
+	s := NewScannerFromString("", "")
 	s.Keep()
 	tok := s.Emit()
 	if tok.Val != "" || tok.Type != "" {

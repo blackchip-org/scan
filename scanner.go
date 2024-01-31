@@ -117,21 +117,45 @@ type Scanner struct {
 	tokPos  Pos
 }
 
-func New(name string, src io.Reader) *Scanner {
-	s := &Scanner{src: peek.NewReader(src)}
+func NewScanner(name string, src io.Reader) *Scanner {
+	s := &Scanner{}
+	s.Init(name, src)
+	return s
+}
+
+func NewScannerFromString(name string, src string) *Scanner {
+	s := &Scanner{}
+	s.InitFromString(name, src)
+	return s
+}
+
+func NewScannerFromBytes(name string, src []byte) *Scanner {
+	s := &Scanner{}
+	s.InitFromBytes(name, src)
+	return s
+}
+
+func (s *Scanner) Init(name string, src io.Reader) {
+	s.This = 0
+	s.Next = 0
+	s.Val.Reset()
+	s.Lit.Reset()
+	s.Errs = nil
+	s.Type = ""
+	s.src = peek.NewReader(src)
+	s.srcErr = nil
 	s.next()
 	s.next()
 	s.thisPos = NewPos(name)
 	s.tokPos = NewPos(name)
-	return s
 }
 
-func NewFromString(name string, src string) *Scanner {
-	return New(name, strings.NewReader(src))
+func (s *Scanner) InitFromString(name string, src string) {
+	s.Init(name, strings.NewReader(src))
 }
 
-func NewFromBytes(name string, src []byte) *Scanner {
-	return New(name, bytes.NewReader(src))
+func (s *Scanner) InitFromBytes(name string, src []byte) {
+	s.Init(name, bytes.NewReader(src))
 }
 
 // HasMore return true if there is more data to consume in the stream.

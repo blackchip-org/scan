@@ -48,7 +48,7 @@ func (t Test) And(val string, line int, col int, type_ string) Test {
 func RunTests(t *testing.T, rules RuleSet, tests []Test) {
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
-			scan := NewFromString("", test.src)
+			scan := NewScannerFromString("", test.src)
 			r := NewRunner(scan, rules)
 			toks := r.All()
 			t.Log("\n" + FormatTokenTable(toks))

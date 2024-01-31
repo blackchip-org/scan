@@ -28,7 +28,7 @@ func main() {
 	}
 	defer f.Close()
 
-	s := scan.New(flag.Arg(0), f)
+	s := scan.NewScanner(flag.Arg(0), f)
 	ctx := scanjson.NewContext()
 	r := scan.NewRunner(s, ctx.RuleSet)
 	toks := r.All()

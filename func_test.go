@@ -3,7 +3,7 @@ package scan
 import "testing"
 
 func TestRepeat(t *testing.T) {
-	s := NewFromString("", "12345")
+	s := NewScannerFromString("", "12345")
 	tests := []struct {
 		val string
 		n   int
@@ -24,7 +24,7 @@ func TestRepeat(t *testing.T) {
 }
 
 func TestWhile(t *testing.T) {
-	s := NewFromString("", "   123abc")
+	s := NewScannerFromString("", "   123abc")
 	tests := []struct {
 		val   string
 		class Class

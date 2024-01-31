@@ -35,7 +35,7 @@ func Example_example7() {
 	}
 
 	var toks []scan.Token
-	s := scan.NewFromString("", "   1234 abcd 5678efgh!")
+	s := scan.NewScannerFromString("", "   1234 abcd 5678efgh!")
 	scan.While(s, scan.Whitespace, s.Discard)
 	for s.HasMore() {
 		toks = append(toks, scanToken(s))
