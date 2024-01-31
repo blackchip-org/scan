@@ -29,6 +29,16 @@ var (
 		scan.Hex8Enc,
 		scan.OctEnc,
 	}
+	Keywords = []string{
+		"break", "case", "chan", "const", "continue",
+		"default", "defer", "else", "fallthrough", "for",
+		"func", "go", "goto", "if", "import",
+		"interface", "map", "package", "range", "return",
+		"select", "struct", "switch", "type", "var",
+	}
+)
+
+var (
 	Ident = scan.Ident.WithKeywords(Keywords...)
 	Int   = scan.Rules(
 		scan.Hex0x.
@@ -48,13 +58,6 @@ var (
 			WithRealType(FloatType).
 			WithDigitSep(scan.Rune('_')),
 	)
-	Keywords = []string{
-		"break", "case", "chan", "const", "continue",
-		"default", "defer", "else", "fallthrough", "for",
-		"func", "go", "goto", "if", "import",
-		"interface", "map", "package", "range", "return",
-		"select", "struct", "switch", "type", "var",
-	}
 	RawString = scan.NewStrRule('`', '`').
 			WithType(StringType).
 			WithMultiline(true)
