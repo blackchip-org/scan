@@ -16,7 +16,7 @@ func scanString(s *scan.Scanner) scan.Token {
 		if s.This == '"' {
 			break
 		} else if s.This == '\\' && s.Next == '"' {
-			s.Keep() // backquote
+			s.Skip() // backquote
 			s.Keep() // quote
 		} else {
 			s.Keep()
@@ -59,7 +59,7 @@ func Example_example8() {
 	//  Pos  Type     Value
 	//  1:4  int      1234
 	//  1:9  ident    abcd
-	// 1:14  str      hello \"world\"
+	// 1:14  str      hello "world"
 	// 1:32  int      5678
 	// 1:36  ident    efgh
 	// 1:40  illegal  !
