@@ -23,7 +23,7 @@ var (
 		WithLeadingZeroAllowed(false).
 		WithEmptyPartsAllowed(false)
 	Symbols    = scan.Literal(Punct...)
-	Whitespace = scan.Rune(' ', '\n', '\r', '\t')
+	Whitespace = scan.NewSpaceRule(scan.Rune(' ', '\n', '\r', '\t'))
 )
 
 type Context struct {
@@ -33,9 +33,10 @@ type Context struct {
 func NewContext() *Context {
 	c := &Context{}
 	c.RuleSet = scan.NewRuleSet(
+		Whitespace,
 		String,
 		Number,
 		Symbols,
-	).WithDiscards(Whitespace)
+	)
 	return c
 }

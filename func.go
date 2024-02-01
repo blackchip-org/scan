@@ -28,6 +28,23 @@ func Until(s *Scanner, c Class, fn func()) {
 	}
 }
 
+func WhileRule(s *Scanner, r Rule, fn func()) {
+	for s.HasMore() {
+		if r.Eval(s) {
+			return
+		}
+		fn()
+	}
+}
+
+func KeepAction(s *Scanner) func() {
+	return func() { s.Keep() }
+}
+
+func DiscardAction(s *Scanner) func() {
+	return func() { s.Discard() }
+}
+
 func Escape(ch rune) string {
 	switch {
 	case ch == '\n':

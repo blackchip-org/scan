@@ -12,21 +12,14 @@ type Rule interface {
 
 type RuleSet struct {
 	rules         []Rule
-	discards      Class
 	preTokenFunc  func(*Scanner)
 	postTokenFunc func(*Scanner, Token) Token
 }
 
 func NewRuleSet(rules ...Rule) RuleSet {
 	return RuleSet{
-		rules:    rules,
-		discards: Whitespace,
+		rules: rules,
 	}
-}
-
-func (r RuleSet) WithDiscards(c Class) RuleSet {
-	r.discards = c
-	return r
 }
 
 func (r RuleSet) WithPreTokenFunc(fn func(*Scanner)) RuleSet {
@@ -50,34 +43,37 @@ func (r RuleSet) Eval(s *Scanner) bool {
 
 func (r RuleSet) Next(s *Scanner) Token {
 	var tok Token
+	start := s.thisPos
+
 	for s.HasMore() {
-		While(s, r.discards, s.Discard)
 		if r.preTokenFunc != nil {
 			r.preTokenFunc(s)
 		}
 
+		match := false
 		for _, rule := range r.rules {
-			if rule.Eval(s) {
+			if match = rule.Eval(s); match {
 				tok = s.Emit()
 				break
 			}
 		}
-		if tok.Type == EmptyType {
-			continue
-		}
-		if !tok.IsValid() {
+		if !match && !tok.IsValid() {
 			s.Illegal("unexpected %s", QuoteRune(s.This))
 			s.Keep()
 			tok = s.Emit()
 		}
-		if r.postTokenFunc != nil {
-			tok = r.postTokenFunc(s, tok)
+		if match {
+			if r.postTokenFunc != nil {
+				tok = r.postTokenFunc(s, tok)
+			}
 		}
-		if tok.Val != "" && tok.Type != "" {
+		if tok.IsValid() {
 			break
 		}
+		if s.thisPos == start {
+			panic("scanner did not advance")
+		}
 	}
-	While(s, r.discards, s.Discard)
 	return tok
 }
 
@@ -150,21 +146,15 @@ func (r CommentRule) Eval(s *Scanner) bool {
 	if !r.begin.Eval(s) {
 		return false
 	}
+	var action func()
 	if *r.keep {
 		s.Type = CommentType
+		action = s.Keep
 	} else {
-		s.Type = EmptyType
+		action = s.Skip
 	}
-	for s.HasMore() {
-		if r.end.Eval(s) {
-			return true
-		}
-		if *r.keep {
-			s.Keep()
-		} else {
-			s.Skip()
-		}
-	}
+
+	WhileRule(s, r.end, action)
 	return true
 }
 
@@ -638,6 +628,37 @@ var (
 	StrDoubleQuote = NewStrRule('"', '"').WithEscape('\\')
 	StrSingleQuote = NewStrRule('\'', '\'').WithEscape('\\')
 )
+
+type SpaceRule struct {
+	keep  bool
+	space Class
+}
+
+func NewSpaceRule(space Class) SpaceRule {
+	return SpaceRule{space: space}
+}
+
+func (r SpaceRule) WithKeep(b bool) SpaceRule {
+	r.keep = b
+	return r
+}
+
+func (r SpaceRule) Eval(s *Scanner) bool {
+	if !s.Is(r.space) {
+		return false
+	}
+
+	var action func()
+	if r.keep {
+		s.Type = SpaceType
+		action = s.Keep
+	} else {
+		action = s.Discard
+	}
+
+	While(s, r.space, action)
+	return true
+}
 
 type trueRule struct{}
 

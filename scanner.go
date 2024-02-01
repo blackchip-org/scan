@@ -18,7 +18,6 @@ const (
 const (
 	BinType     = "bin"
 	CommentType = "comment"
-	EmptyType   = "empty"
 	ErrorType   = "error"
 	HexType     = "hex"
 	IdentType   = "ident"
@@ -26,6 +25,7 @@ const (
 	IntType     = "int"
 	OctType     = "oct"
 	RealType    = "real"
+	SpaceType   = "space"
 	StrType     = "str"
 )
 

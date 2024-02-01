@@ -1,0 +1,292 @@
+[
+    {
+        "val": "{",
+        "lit": "{",
+        "type": "{",
+        "pos": {
+            "name": "example.json",
+            "line": 1,
+            "col": 1
+        }
+    },
+    {
+        "val": "type",
+        "lit": "\"type\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 2,
+            "col": 5
+        }
+    },
+    {
+        "val": ":",
+        "lit": ":",
+        "type": ":",
+        "pos": {
+            "name": "example.json",
+            "line": 2,
+            "col": 11
+        }
+    },
+    {
+        "val": "Feature",
+        "lit": "\"Feature\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 2,
+            "col": 13
+        }
+    },
+    {
+        "val": ",",
+        "lit": ",",
+        "type": ",",
+        "pos": {
+            "name": "example.json",
+            "line": 2,
+            "col": 22
+        }
+    },
+    {
+        "val": "geometry",
+        "lit": "\"geometry\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 3,
+            "col": 5
+        }
+    },
+    {
+        "val": ":",
+        "lit": ":",
+        "type": ":",
+        "pos": {
+            "name": "example.json",
+            "line": 3,
+            "col": 15
+        }
+    },
+    {
+        "val": "{",
+        "lit": "{",
+        "type": "{",
+        "pos": {
+            "name": "example.json",
+            "line": 3,
+            "col": 17
+        }
+    },
+    {
+        "val": "type",
+        "lit": "\"type\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 4,
+            "col": 9
+        }
+    },
+    {
+        "val": ":",
+        "lit": ":",
+        "type": ":",
+        "pos": {
+            "name": "example.json",
+            "line": 4,
+            "col": 15
+        }
+    },
+    {
+        "val": "Point",
+        "lit": "\"Point\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 4,
+            "col": 17
+        }
+    },
+    {
+        "val": ",",
+        "lit": ",",
+        "type": ",",
+        "pos": {
+            "name": "example.json",
+            "line": 4,
+            "col": 24
+        }
+    },
+    {
+        "val": "coordinates",
+        "lit": "\"coordinates\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 5,
+            "col": 9
+        }
+    },
+    {
+        "val": ":",
+        "lit": ":",
+        "type": ":",
+        "pos": {
+            "name": "example.json",
+            "line": 5,
+            "col": 22
+        }
+    },
+    {
+        "val": "[",
+        "lit": "[",
+        "type": "[",
+        "pos": {
+            "name": "example.json",
+            "line": 5,
+            "col": 24
+        }
+    },
+    {
+        "val": "125.6",
+        "lit": "125.6",
+        "type": "real",
+        "pos": {
+            "name": "example.json",
+            "line": 6,
+            "col": 13
+        }
+    },
+    {
+        "val": ",",
+        "lit": ",",
+        "type": ",",
+        "pos": {
+            "name": "example.json",
+            "line": 6,
+            "col": 18
+        }
+    },
+    {
+        "val": "10.1",
+        "lit": "10.1",
+        "type": "real",
+        "pos": {
+            "name": "example.json",
+            "line": 7,
+            "col": 13
+        }
+    },
+    {
+        "val": "]",
+        "lit": "]",
+        "type": "]",
+        "pos": {
+            "name": "example.json",
+            "line": 8,
+            "col": 9
+        }
+    },
+    {
+        "val": "}",
+        "lit": "}",
+        "type": "}",
+        "pos": {
+            "name": "example.json",
+            "line": 9,
+            "col": 5
+        }
+    },
+    {
+        "val": ",",
+        "lit": ",",
+        "type": ",",
+        "pos": {
+            "name": "example.json",
+            "line": 9,
+            "col": 6
+        }
+    },
+    {
+        "val": "properties",
+        "lit": "\"properties\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 10,
+            "col": 5
+        }
+    },
+    {
+        "val": ":",
+        "lit": ":",
+        "type": ":",
+        "pos": {
+            "name": "example.json",
+            "line": 10,
+            "col": 17
+        }
+    },
+    {
+        "val": "{",
+        "lit": "{",
+        "type": "{",
+        "pos": {
+            "name": "example.json",
+            "line": 10,
+            "col": 19
+        }
+    },
+    {
+        "val": "name",
+        "lit": "\"name\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 11,
+            "col": 9
+        }
+    },
+    {
+        "val": ":",
+        "lit": ":",
+        "type": ":",
+        "pos": {
+            "name": "example.json",
+            "line": 11,
+            "col": 15
+        }
+    },
+    {
+        "val": "Dinagat Islands",
+        "lit": "\"Dinagat Islands\"",
+        "type": "str",
+        "pos": {
+            "name": "example.json",
+            "line": 11,
+            "col": 17
+        }
+    },
+    {
+        "val": "}",
+        "lit": "}",
+        "type": "}",
+        "pos": {
+            "name": "example.json",
+            "line": 12,
+            "col": 5
+        }
+    },
+    {
+        "val": "}",
+        "lit": "}",
+        "type": "}",
+        "pos": {
+            "name": "example.json",
+            "line": 13,
+            "col": 1
+        }
+    }
+]

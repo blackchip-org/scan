@@ -89,7 +89,7 @@ var (
 		WithEscape('\\').
 		WithEscapeRules(EscapeRules...)
 	Symbols    = scan.Literal(OpsPunct...)
-	Whitespace = scan.Rune(' ', '\t', '\r')
+	Whitespace = scan.NewSpaceRule(scan.Rune(' ', '\t', '\r'))
 )
 
 var semiColonRequiredAfter = map[string]struct{}{
@@ -118,7 +118,7 @@ func AutoSemiInsertion() func(*scan.Scanner, scan.Token) scan.Token {
 				t.Type = ";"
 				t.Val = ";"
 			} else {
-				t = scan.Token{Type: scan.EmptyType}
+				t = scan.Token{}
 			}
 		}
 		last = t
@@ -147,6 +147,7 @@ type Context struct {
 func NewContext() *Context {
 	c := &Context{}
 	c.RuleSet = scan.NewRuleSet(
+		Whitespace,
 		GenComment.WithKeep(&c.KeepComments),
 		LineComment.WithKeep(&c.KeepComments),
 		Rune,
@@ -158,8 +159,6 @@ func NewContext() *Context {
 		RawString,
 		Ident,
 		Symbols,
-	).
-		WithDiscards(Whitespace).
-		WithPostTokenFunc(AutoSemiInsertion())
+	).WithPostTokenFunc(AutoSemiInsertion())
 	return c
 }

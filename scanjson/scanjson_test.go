@@ -1,6 +1,7 @@
 package scanjson
 
 import (
+	_ "embed"
 	"testing"
 
 	"github.com/blackchip-org/scan"
@@ -68,3 +69,24 @@ func TestNumbers(t *testing.T) {
 	}
 	scan.RunTests(t, ctx.RuleSet, tests)
 }
+
+//go:embed example.json
+var example string
+
+//go:embed example.tokens.json
+var exampleTokens string
+
+// func TestFile(t *testing.T) {
+// 	s := scan.NewScannerFromString("example.json", example)
+// 	ctx := NewContext()
+// 	toks := scan.NewRunner(s, ctx.RuleSet).All()
+// 	data, err := json.MarshalIndent(toks, "", "    ")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+
+// 	have := string(data)
+// 	if have != exampleTokens {
+// 		t.Errorf("have:\n%v\nwant:\n%v", have, exampleTokens)
+// 	}
+// }
