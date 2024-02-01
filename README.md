@@ -1,6 +1,6 @@
 # scan
 
-An all-purpose scanner for your lexical needs.
+An all-purpose scanner for your lexical needs. Guaranteed to be regex-free!
 
 ## Introduction
 
@@ -95,7 +95,7 @@ or:
     s.InitString("", "hello world")
 ```
 
-## `Keep` and `Emit`
+## Keep and Emit
 
 When using the lower level functions, a stream is processed one rune at a time.
 A buffer is used to accumulate these runes until a complete token has been
@@ -141,20 +141,19 @@ digits. This type of function is a `Class` function and it checks to see
 if a rune is member of that class. Example:
 
 ```go
-    digit09 := func(r rune) bool {
-        return r >= '0' && r <= '9'
-    }
+	digit09 := func(r rune) bool {
+		return r >= '0' && r <= '9'
+	}
 
-    s := scan.NewScannerFromString("", "1010234abc!")
-    for s.HasMore() && s.Is(digit09) {
-        s.Keep()
-    }
-    tok := s.Emit()
-    fmt.Println(tok.Val)
+	s := scan.NewScannerFromString("", "1010234abc!")
+	for s.HasMore() && digit09(s.This) {
+		s.Keep()
+	}
+	tok := s.Emit()
+	fmt.Println(tok.Val)
 
-    // Output:
-    // 1010234
-
+	// Output:
+	// 1010234
 ```
 [Example 2](doc/example_2_test.go)
 
@@ -167,7 +166,7 @@ rune classes:
 
 Creates a `Class` function that returns true if it matches any of the
 specified runes. An example of a rune class that checks for common
-whitespace runes:
+whitespace:
 
 ```go
     whitespace := scan.Rune(' ', '\n', '\t', '\f', '\r')
@@ -313,7 +312,7 @@ The example can now be updated to remove the loop with a call to `While`:
 ```
 [Example 4](doc/example_4_test.go)
 
-## `Discard`
+## Discard
 
 For runes like whitespace, it useful to simply discard them without creating
 tokens. Use the `Discard` method to reset the current token buffer, discard the
@@ -331,7 +330,8 @@ now discards any whitespace found at the beginning of the stream:
     // 1010234
 ```
 [Example 5](doc/example_5_test.go)
-```
+
+
 
 ## To be continued...
 

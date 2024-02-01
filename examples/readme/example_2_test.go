@@ -12,7 +12,7 @@ func Example_example2() {
 	}
 
 	s := scan.NewScannerFromString("", "1010234abc!")
-	for s.HasMore() && s.Is(digit09) {
+	for s.HasMore() && digit09(s.This) {
 		s.Keep()
 	}
 	tok := s.Emit()
