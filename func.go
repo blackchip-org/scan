@@ -37,18 +37,35 @@ func WhileRule(s *Scanner, r Rule, fn func()) {
 	}
 }
 
-func KeepAction(s *Scanner) func() {
-	return func() { s.Keep() }
+func UnexpectedRune() func(*Scanner) {
+	return func(s *Scanner) {
+		s.Illegal("unexpected %s", QuoteRune(s.This))
+		s.Keep()
+	}
 }
 
-func DiscardAction(s *Scanner) func() {
-	return func() { s.Discard() }
+func UnexpectedUntil(c Class) func(*Scanner) {
+	return func(s *Scanner) {
+		Until(s, c, s.Keep)
+		s.Illegal("unexpected %s", Quote(s.Lit.String()))
+	}
+}
+
+var escapeMap = map[rune]string{
+	'\a': "\\a",
+	'\b': "\\b",
+	'\f': "\\f",
+	'\n': "\\n",
+	'\r': "\\r",
+	'\t': "\\t",
+	'\v': "\\v",
 }
 
 func Escape(ch rune) string {
+	if es, ok := escapeMap[ch]; ok {
+		return fmt.Sprintf("{!ch:%v}", es)
+	}
 	switch {
-	case ch == '\n':
-		return "{!ch:\\n}"
 	case ch <= 0xff:
 		return fmt.Sprintf("{!ch:%02x}", ch)
 	case ch <= 0xffff:

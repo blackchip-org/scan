@@ -58,6 +58,7 @@ func TestQuote(t *testing.T) {
 		{"a\"b\"'c'd", "`a\"b\"'c'd`"},
 		{"a\"b\"'c'`d`", "{!quote:a\"b\"'c'`d`}"},
 		{"ab\x00cd", `"ab{!ch:00}cd"`},
+		{"\u00a0", `"{!ch:a0}"`},
 	}
 
 	for _, test := range tests {

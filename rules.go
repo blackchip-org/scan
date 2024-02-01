@@ -14,11 +14,13 @@ type RuleSet struct {
 	rules         []Rule
 	preTokenFunc  func(*Scanner)
 	postTokenFunc func(*Scanner, Token) Token
+	noMatchFunc   func(*Scanner)
 }
 
 func NewRuleSet(rules ...Rule) RuleSet {
 	return RuleSet{
-		rules: rules,
+		rules:       rules,
+		noMatchFunc: UnexpectedRune(),
 	}
 }
 
@@ -29,6 +31,11 @@ func (r RuleSet) WithPreTokenFunc(fn func(*Scanner)) RuleSet {
 
 func (r RuleSet) WithPostTokenFunc(fn func(*Scanner, Token) Token) RuleSet {
 	r.postTokenFunc = fn
+	return r
+}
+
+func (r RuleSet) WithNoMatchFunc(fn func(*Scanner)) RuleSet {
+	r.noMatchFunc = fn
 	return r
 }
 
@@ -58,8 +65,9 @@ func (r RuleSet) Next(s *Scanner) Token {
 			}
 		}
 		if !match && !tok.IsValid() {
-			s.Illegal("unexpected %s", QuoteRune(s.This))
-			s.Keep()
+			// s.Illegal("unexpected %s", QuoteRune(s.This))
+			// s.Keep()
+			r.noMatchFunc(s)
 			tok = s.Emit()
 		}
 		if match {
@@ -667,3 +675,20 @@ func (r trueRule) Eval(s *Scanner) bool {
 }
 
 var TrueRule = trueRule{}
+
+type WordRule struct {
+	letter Class
+}
+
+func NewWordRule(letter Class) WordRule {
+	return WordRule{letter: letter}
+}
+
+func (r WordRule) Eval(s *Scanner) bool {
+	if !s.Is(r.letter) {
+		return false
+	}
+	s.Type = WordType
+	While(s, r.letter, s.Keep)
+	return true
+}

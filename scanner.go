@@ -27,6 +27,7 @@ const (
 	RealType    = "real"
 	SpaceType   = "space"
 	StrType     = "str"
+	WordType    = "word"
 )
 
 // Pos represents a position within an input stream.

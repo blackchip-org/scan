@@ -13,7 +13,6 @@ var (
 		),
 		scan.Hex4Enc,
 	}
-	Punct = []string{"{", "}", "[", "]", ":", ",", "true", "false", "null"}
 )
 
 var (
@@ -22,7 +21,10 @@ var (
 		WithSign(scan.Rune('-')).
 		WithLeadingZeroAllowed(false).
 		WithEmptyPartsAllowed(false)
-	Symbols    = scan.Literal(Punct...)
+	Literals = scan.Literal(
+		"{", "}", "[", "]", ":", ",",
+		"true", "false", "null",
+	)
 	Whitespace = scan.NewSpaceRule(scan.Rune(' ', '\n', '\r', '\t'))
 )
 
@@ -34,9 +36,9 @@ func NewContext() *Context {
 	c := &Context{}
 	c.RuleSet = scan.NewRuleSet(
 		Whitespace,
+		Literals,
 		String,
 		Number,
-		Symbols,
 	)
 	return c
 }
