@@ -598,12 +598,12 @@ gets in the way. Another use case is to convert runes to another rune. For
 example, converting all whitespace runes to a single space value or changing
 newlines to semicolons. The following can be used for these cases:
 
-#### s.Skip()
+#### `s.Skip()`
 
 Adds the current rune to the token's literal but not to the token's value. The
 scanner then advances to the next rune.
 
-#### s.Value
+#### `s.Value`
 
 This is a string builder containing the token value seen so far. If newlines
 need to be converted to semicolons, this can be done in the following way:
