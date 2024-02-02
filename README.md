@@ -132,7 +132,7 @@ single binary number from an input stream can be done with the following:
     // Output:
     // 1010
 ```
-[Example 1](doc/example_1_test.go)
+[Example 1](examples/readme/example_1_test.go)
 
 This scans the input stream while it contains zeros on ones. As soon as it
 finds something else, it breaks out of the loop, emits the token, and prints
@@ -162,7 +162,7 @@ member of that class. Example:
     // Output:
     // 1010234
 ```
-[Example 2](doc/example_2_test.go)
+[Example 2](examples/readme/example_2_test.go)
 
 ### Class Functions
 
@@ -268,7 +268,7 @@ base-10 numbers and the `s.Is()` method:
     // Output:
     // 1010234
 ```
-[Example 3](doc/example_3_test.go)
+[Example 3](examples/readme/example_3_test.go)
 
 ## Loop Functions
 
@@ -320,7 +320,7 @@ The example can now be updated to remove the loop with a call to
     // Output:
     // 1010234
 ```
-[Example 4](doc/example_4_test.go)
+[Example 4](examples/readme/example_4_test.go)
 
 ## `s.Discard()`
 
@@ -339,7 +339,7 @@ now discards any whitespace found at the beginning of the stream:
     // Output:
     // 1010234
 ```
-[Example 5](doc/example_5_test.go)
+[Example 5](examples/readme/example_5_test.go)
 
 ## Types
 
@@ -363,7 +363,7 @@ The function for the integer is as follows:
         return true
     }
 ```
-[Example 6](doc/example_6_test.go)
+[Example 6](examples/readme/example_6_test.go)
 
 The function for the word is similar and is as follows:
 
@@ -377,7 +377,7 @@ The function for the word is similar and is as follows:
         return true
     }
 ```
-[Example 6](doc/example_6_test.go)
+[Example 6](examples/readme/example_6_test.go)
 
 Since whitespace is now significant, it will be returned as a token instead
 of being discarded:
@@ -392,7 +392,7 @@ of being discarded:
         return true
     }
 ```
-[Example 6](doc/example_6_test.go)
+[Example 6](examples/readme/example_6_test.go)
 
 Now create a main loop that checks each function for a match and collects all
 tokens seen along the way:
@@ -435,7 +435,7 @@ tokens seen along the way:
     // example6:1:15  word     "def"         "def"
     // example6:1:18  int      "456"         "456"
 ```
-[Example 6](doc/example_6_test.go)
+[Example 6](examples/readme/example_6_test.go)
 
 For each token that is generated, we can check the `tok.Type` field to see if
 it is an int, word, space, or an illegal token. The `tok.Pos` field contains
@@ -507,7 +507,7 @@ interface. Changing the integer function to a rule looks like this:
         return true
     }
 ```
-[Example 7](doc/example_7_test.go)
+[Example 7](examples/readme/example_7_test.go)
 
 The rules for word and whitespace looks similar and can be found in the links
 to the example.
@@ -556,7 +556,7 @@ all the tokens can be obtained by calling `runner.All()`:
     // example7:1:15  word     "def"         "def"
     // example7:1:18  int      "456"         "456"
 ```
-[Example 7](doc/example_7_test.go)
+[Example 7](examples/readme/example_7_test.go)
 
 ## Preprocessing
 
@@ -622,7 +622,7 @@ func (r IntRule2) Eval(s *scan.Scanner) bool {
     return true
 }
 ```
-[Example 8](doc/example_8_test.go)
+[Example 8](examples/readme/example_8_test.go)
 
 Now update the rule set with the new rule and modify the input to include some
 digit separators:
@@ -653,7 +653,7 @@ digit separators:
     // example8:1:17  word     "def"         "def"
     // example8:1:20  45678    "45678"       "45,678"
 ```
-[Example 8](doc/example_8_test.go)
+[Example 8](examples/readme/example_8_test.go)
 
 ## Predefined Rules
 
@@ -685,7 +685,7 @@ so far. The example can now be updated to use those rules instead:
     // example9:1:17  word     "def"         "def"
     // example9:1:20  int      "45678"       "45,678"
 ```
-[Example 9](doc/example_9_test.go)
+[Example 9](examples/readme/example_9_test.go)
 
 The predefined rules are as follows:
 
