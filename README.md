@@ -2,6 +2,8 @@
 
 An all-purpose scanner for your lexical needs.
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/blackchip-org/scan.svg)](https://pkg.go.dev/github.com/blackchip-org/scan)
+
 ## Introduction
 
 A scanner is used to extract the fundamental and basic elements of a structured
