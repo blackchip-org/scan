@@ -422,7 +422,7 @@ tokens seen along the way:
     }
     fmt.Println(scan.FormatTokenTable(toks))
 
-       // Output:
+    // Output:
     //
     // Pos            Type     Value         Literal
     // example6:1:1   word     "abc"         "abc"
