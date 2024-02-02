@@ -1,6 +1,10 @@
 package scango
 
-import "github.com/blackchip-org/scan"
+import (
+	"fmt"
+
+	"github.com/blackchip-org/scan"
+)
 
 const (
 	CommentType = scan.CommentType
@@ -14,21 +18,6 @@ const (
 )
 
 var (
-	EscapeRules = []scan.Rule{
-		scan.NewCharEncRule(
-			scan.AlertEnc,
-			scan.BackspaceEnc,
-			scan.FormFeedEnc,
-			scan.LineFeedEnc,
-			scan.CarriageReturnEnc,
-			scan.HorizontalTabEnc,
-			scan.VerticalTabEnc,
-		),
-		scan.Hex2Enc,
-		scan.Hex4Enc,
-		scan.Hex8Enc,
-		scan.OctEnc,
-	}
 	Keywords = []string{
 		"break", "case", "chan", "const", "continue",
 		"default", "defer", "else", "fallthrough", "for",
@@ -83,14 +72,35 @@ var (
 		WithType(RuneType).
 		WithMaxLen(1).
 		WithEscape('\\').
-		WithEscapeRules(EscapeRules...)
+		WithEscapeRules(EscapeRules(RuneType)...)
 	String = scan.NewStrRule('"', '"').
 		WithType(StringType).
 		WithEscape('\\').
-		WithEscapeRules(EscapeRules...)
+		WithEscapeRules(EscapeRules(StringType)...)
 	Symbols    = scan.Literal(OpsPunct...)
 	Whitespace = scan.NewSpaceRule(scan.Rune(' ', '\t', '\r'))
 )
+
+func EscapeRules(type_ string) []scan.Rule {
+	if type_ != StringType && type_ != RuneType {
+		panic(fmt.Sprintf("invalid escape rule type: %v", type_))
+	}
+	return []scan.Rule{
+		scan.NewCharEncRule(
+			scan.AlertEnc,
+			scan.BackspaceEnc,
+			scan.FormFeedEnc,
+			scan.LineFeedEnc,
+			scan.CarriageReturnEnc,
+			scan.HorizontalTabEnc,
+			scan.VerticalTabEnc,
+		),
+		scan.Hex2Enc.AsByte(type_ == StringType),
+		scan.Hex4Enc,
+		scan.Hex8Enc,
+		scan.OctEnc,
+	}
+}
 
 var semiColonRequiredAfter = map[string]struct{}{
 	IdentType:     {},

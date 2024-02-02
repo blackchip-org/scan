@@ -22,6 +22,32 @@ func TestBin0b(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
+func TestEscapeRules(t *testing.T) {
+	rule := NewRuleSet(StrDoubleQuote.WithEscapeRules(
+		NewCharEncRule(
+			AlertEnc,
+			BackspaceEnc,
+			FormFeedEnc,
+			LineFeedEnc,
+			CarriageReturnEnc,
+			HorizontalTabEnc,
+			VerticalTabEnc,
+		),
+		Hex2Enc.AsByte(true),
+		Hex4Enc,
+		Hex8Enc,
+		OctEnc,
+	))
+	tests := []Test{
+		NewTest(`"日本語"`, `日本語`, 1, 1, StrType),
+		NewTest(`"\u65e5\u672c\u8a9e"`, `日本語`, 1, 1, StrType),
+		NewTest(`"\U000065e5\U0000672c\U00008a9e"`, `日本語`, 1, 1, StrType),
+		NewTest(`"\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"`, `日本語`, 1, 1, StrType),
+	}
+	RunTests(t, rule, tests)
+
+}
+
 func TestHex(t *testing.T) {
 	rules := NewRuleSet(Hex)
 	tests := []Test{

@@ -227,7 +227,7 @@ func TestString(t *testing.T) {
 		scan.NewTest(`"a\"b"`, `a"b`, 1, 1, StringType),
 		scan.NewTest(`"日本語"`, "日本語", 1, 1, StringType),
 		scan.NewTest(`"\u65e5本\U00008a9e"`, "日本語", 1, 1, StringType),
-		scan.NewTest(`"\xff\u00FF"`, "ÿÿ", 1, 1, StringType),
+		scan.NewTest(`"\xff\u00FF"`, "\xffÿ", 1, 1, StringType),
 		scan.NewTest(`"\uD800"`, "D800", 1, 1, IllegalType).
 			WithError(`1:4: error: invalid encoding: "D800"`),
 		scan.NewTest(`"\U00110000"`, "00110000", 1, 1, IllegalType).

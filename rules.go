@@ -65,8 +65,6 @@ func (r RuleSet) Next(s *Scanner) Token {
 			}
 		}
 		if !match && !tok.IsValid() {
-			// s.Illegal("unexpected %s", QuoteRune(s.This))
-			// s.Keep()
 			r.noMatchFunc(s)
 			tok = s.Emit()
 		}
@@ -169,6 +167,7 @@ func (r CommentRule) Eval(s *Scanner) bool {
 type HexEncRule struct {
 	flag   rune
 	digits int
+	asByte bool
 }
 
 func NewHexEncRule(flag rune, digits int) HexEncRule {
@@ -176,6 +175,14 @@ func NewHexEncRule(flag rune, digits int) HexEncRule {
 		panic(fmt.Sprintf("invalid digits '%v' for hex encoding map", digits))
 	}
 	return HexEncRule{flag: flag, digits: digits}
+}
+
+func (r HexEncRule) AsByte(b bool) HexEncRule {
+	if b && r.digits != 2 {
+		panic("digits must be 2 for encoding bytes")
+	}
+	r.asByte = b
+	return r
 }
 
 func (r HexEncRule) Eval(s *Scanner) bool {
@@ -199,14 +206,18 @@ func (r HexEncRule) Eval(s *Scanner) bool {
 		Repeat(s.Keep, r.digits)
 		return true
 	}
-	ch := rune(val)
-	if !utf8.ValidRune(ch) {
-		s.Illegal("invalid encoding: %v", Quote(string(digits)))
-		Repeat(s.Keep, r.digits)
-		return true
+	if r.asByte {
+		s.Val.WriteByte(uint8(val))
+	} else {
+		ch := rune(val)
+		if !utf8.ValidRune(ch) {
+			s.Illegal("invalid encoding: %v", Quote(string(digits)))
+			Repeat(s.Keep, r.digits)
+			return true
+		}
+		s.Val.WriteRune(ch)
 	}
 	Repeat(s.Skip, r.digits)
-	s.Val.WriteRune(ch)
 	return true
 }
 
