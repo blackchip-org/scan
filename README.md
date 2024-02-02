@@ -30,20 +30,22 @@ Some things really do matter. The brackets that are used to define an object.
 The strings that are enclosed by double quotes. The colon that separates a
 property name from its value. These are the tokens of the document. Parsing
 a document is much easier when working with a stream of tokens instead of
-a individual characters.
+individual characters.
 
 Let's look at the third line of the example. It starts with a string token with
 the value of `geometry`. It is important to capture both bits of information--
 its value of `geometry` and its type of `string`. A parser for this document is
-interested if the line starts with a string token or not but is not concerned
-about its value. Users of the parse result will be interested in the value.
+interested if the next token is a string or not but is not concerned about its
+value. Users of the parse result will be interested in the value.
 
-When there are errors parsing the document, good error messages are useful to
-help identify where problems are located. Recording the line and column number
-with each token is important for this reporting.
+When there are errors scanning and parsing the document, good error messages
+are useful to help identify where problems are located. Recording the line and
+column number with each token is important for this reporting.
 
 The examples directory contains a JSON scanner using the scanner provided by
 this package. Run it with the following:
+
+    go run cmd/scan-json/scan-json.go example.json
 
 A table should be printed to the terminal with the stream of tokens found
 in the file. Its output starts with the following:
@@ -66,18 +68,18 @@ times. This scanner provides low level functions for iterating over a stream
 and for building tokens. It also has higher level functions that are useful for
 chaining together common scanning patterns. Scanners for files that follow
 standard patterns can be constructed easily using the definitions found in this
-package. The example JSON scanner is about 30 lines in length. Complex or
-non-standard cases can stick with the lower level functions which still provide
-a lot of value in getting a scanner up and running quickly.
+package. Complex or non-standard cases can stick with the lower level functions
+which still provide a lot of value in getting a scanner up and running quickly.
 
 ## Creating a Scanner
 
 A scanner is initialized with a filename followed by an input source which can
-be either a `io.Reader`, a `string` or a `byte` slice. Use one of the
-corresponding new functions to create a scanner or use an init function to
-initialize a zero value scanner or to reset an existing scanner.
+be either an `io.Reader`, a `string` or a `byte` slice. If the filename is not
+important or doesn't apply to the input, it can set to a blank value. Use one
+of the corresponding new functions to create a scanner or use an init function
+to either initialize a zero value scanner or to reset an existing scanner.
 
-Use either:
+An example of using new to read from a file:
 
 ```go
     f, err := os.Open(filename)
@@ -88,7 +90,7 @@ Use either:
     s := scan.NewScanner(filename, f)
 ```
 
-or:
+An example of using init to read from a string:
 
 ```go
     var s scan.Scanner
@@ -99,8 +101,23 @@ or:
 
 When using the lower level functions, a stream is processed one rune at a time.
 A buffer is used to accumulate these runes until a complete token has been
-seen. The basic scanning loop is to decide which of the following functions
-should be called for each rune:
+seen. The basic scanning loop is to look at the upcoming rune in the input
+and to decide to either keep the rune for the current token or to emit the
+token. The following fields and methods are used for this:
+
+#### `s.This`
+
+The rune at the current position in the input stream.
+
+#### `s.Next`
+
+The next rune found in the input stream. When the scanner advances, this value
+will become `s.This`
+
+#### `s.HasMore()`
+
+Returns true if there is more runes in the input stream. Returns false when
+the end of file or an error condition is encountered.
 
 #### `s.Keep()`
 
@@ -113,9 +130,9 @@ Returns the current token and resets the token buffer.
 
 ### Example
 
-The current rune is accessed with the `s.This` field and the `s.HasMore()`
-method returns `true` as long as there is more data in the stream. Scanning a
-single binary number from an input stream can be done with the following:
+Scanning a single binary number from an input stream can be done by looping
+over the stream while it has data and adding to the token buffer as long as the
+current rune is a zero or a one:
 
 ```go
     s := scan.NewScannerFromString("", "1010234abc!")
@@ -134,18 +151,18 @@ single binary number from an input stream can be done with the following:
 ```
 [Example 1](examples/readme/example_1_test.go)
 
-This scans the input stream while it contains zeros on ones. As soon as it
-finds something else, it breaks out of the loop, emits the token, and prints
-the value. The contents for `235abc!` are not scanned.
+Once the scanner encounters a non-binary digit, it breaks out of the loop and
+emits the token accumulated so far. The remaining contents of the stream,
+"234abc!", are not read.
 
 ## Classes
 
 Now we will update the example to scan for an unsigned integer in base 10. The
-only change to the code is to check for digits 0 through 9 instead of just 0
+only change necessary is to now check for digits 0 through 9 instead of just 0
 and 1. This check can be placed into a separate function that takes a `rune` as
 input and returns a `bool` indicating if the rune is one of those digits. This
-type of function is a `scan.Class` function and it checks to see if a rune is
-member of that class. Example:
+type of function is a `scan.Class` function and it is used to determine if a
+rune is member of that class. Example:
 
 ```go
     digit09 := func(r rune) bool {
@@ -234,7 +251,7 @@ classes return `true` under the following conditions:
 - `scan.Rune16`: a code point that can fit in a 16-bit number
 - `scan.Whitespace`: whitespace as defined by Unicode.
 
-### `s.Is()`
+#### `s.Is()`
 
 The current rune found in `s.This` can be tested with a class using the `s.Is`
 method of the scanner:
@@ -252,10 +269,14 @@ This is equivalent to:
 The advantage to using `s.Is()` is that the function will return `false` when
 passed a `nil` class function.
 
+#### `s.NextIs()`
+
+Same as `s.Is()` but checks if the next rune belongs to the given class.
+
 ### Updated Example
 
 The previous example can now be updated using the predefined class for
-base-10 numbers and the `s.Is()` method:
+base 10 numbers and the `s.Is()` method:
 
 ```go
     s := scan.NewScannerFromString("1010234abc!")
@@ -322,12 +343,16 @@ The example can now be updated to remove the loop with a call to
 ```
 [Example 4](examples/readme/example_4_test.go)
 
-## `s.Discard()`
+## Discarding
 
 For runes like whitespace, it useful to simply discard them without creating
-tokens. Use the `s.Discard()` method to reset the current token buffer, discard
-the current rune, and advance the scanner to the next rune. The example below
-now discards any whitespace found at the beginning of the stream:
+tokens.
+
+#### `s.Discard()`
+
+Resets the current token buffer, discards the current rune, and advances the
+scanner to the next rune. The example below now discards any whitespace found
+at the beginning of the stream:
 
 ```go
     s := scan.NewScannerFromString("", " \t 1010234abc!")
@@ -345,11 +370,11 @@ now discards any whitespace found at the beginning of the stream:
 
 The next example is going to scan the entire stream and create tokens for each
 integer and word that is found. A word is going to be any sequence of letters
-and letters only. Integers and words must be separated by whitespace. For this
-scanner, each token type will be placed in a separate function and each token
-will be marked with a type. A type can be any string value but there are some
-constants predefined in the scan package. The functions return a boolean value
-to indicate if there was a match for that token.
+found in the stream. Integers and words must be separated by whitespace. We
+will now place each token type will into a separate function and each token
+will now be identified with a type. A type can be any string value but there
+are some constants already defined in the scan package. The functions return a
+boolean value to indicate if there was a match for that token.
 
 The function for the integer is as follows:
 
@@ -394,8 +419,8 @@ of being discarded:
 ```
 [Example 6](examples/readme/example_6_test.go)
 
-Now create a main loop that checks each function for a match and collects all
-tokens seen along the way:
+Now create a main loop that checks each function for a match and then collects
+all of the tokens seen along the way:
 
 ```go
     scanFuncs := []func(*scan.Scanner) bool {
@@ -439,16 +464,16 @@ tokens seen along the way:
 
 For each token that is generated, we can check the `tok.Type` field to see if
 it is an int, word, space, or an illegal token. The `tok.Pos` field contains
-the name of the file (or item) being scanned and the line and column number of
-where the token starts.
+the name of the file (or item) being scanned, the line number, and the column
+number of where the token starts.
 
-Note that the role of the scanner is to simply emit tokens of the various
-types seen in the input stream. The "def456" is illegal by this example's
-definition because a space must separate the word and the integer. That
-check should be handled by the parser that is processing the tokens, not by
-the scanner itself.
+Note that the role of the scanner is to simply emit tokens of the various types
+seen in the input stream. The "def456" string in the stream is illegal by this
+example's definition because a space must separate the word and the integer.
+That check should be handled by the parser that is processing the tokens, not
+by the scanner itself.
 
-There are a few new functions or methods introduced in the example:
+There are a few new functions or methods introduced in this example:
 
 #### `s.Illegal()`
 
@@ -509,11 +534,14 @@ interface. Changing the integer function to a rule looks like this:
 ```
 [Example 7](examples/readme/example_7_test.go)
 
-The rules for word and whitespace looks similar and can be found in the links
-to the example.
+With this change, this one rule can be used for scanning decimal, binary,
+octal, and hexadecimal numbers simply by calling new with the corresponding
+digit class .The rules for word and whitespace looks similar and aren't
+show here. The full source code for the example can be found in the
+Example 7 links.
 
-Now a function is needed to handle the case where a token does not match.
-This also has to be configurable to scan until whitespace is found. This
+Now a function is needed to handle the case where a token does not match. This
+also has to be configurable to allow different definitions of whitespace. This
 will be a function that returns a function that scans the unexpected value
 until the specified class is found:
 
@@ -527,8 +555,8 @@ func UnexpectedUntil(c scan.Class) func(*scan.Scanner) {
 ```
 
 These new rules and the no match function can now be bundled up with a
-`scan.RuleSet`. Then, a `scan.Runner` can be created with the scanner and rule
-set to iterate through the tokens using `runner.HasMore` and `runner.Next`. Or,
+`scan.RuleSet`. Then a `scan.Runner` can be created with the scanner and rule
+set to iterate through the tokens using `runner.HasMore` and `runner.Next`. Or
 all the tokens can be obtained by calling `runner.All()`:
 
 ```go
@@ -562,21 +590,21 @@ all the tokens can be obtained by calling `runner.All()`:
 
 Sometimes it is convenient to perform some light preprocessing of the token
 value before passing it off to the parser. A good example of this is allowing
-digit separators in an integer value such as 1,000. The parser is most likely
-going to pass this responsibility over to `strconv.ParseInt()` and the
-comma gets in the way. Another use case is to convert runes to another rune.
-For example, converting all whitespace runes to a space value or changing
+digit separators in an integer value such as "1,000". The parser is most likely
+going to pass this responsibility over to `strconv.ParseInt()` and the comma
+gets in the way. Another use case is to convert runes to another rune. For
+example, converting all whitespace runes to a single space value or changing
 newlines to semicolons. The following can be used for these cases:
 
 #### s.Skip()
 
-Adds the current character to the token's literal but not to the token's value.
-The scanner then advances to the next character.
+Adds the current rune to the token's literal but not to the token's value. The
+scanner then advances to the next rune.
 
 #### s.Value
 
 This is a string builder containing the token value seen so far. If newlines
-need to be converted to semicolons, this can be done like in the following:
+need to be converted to semicolons, this can be done in the following way:
 
 ```go
     if s.This == '\n' {
@@ -586,9 +614,9 @@ need to be converted to semicolons, this can be done like in the following:
 ```
 
 Now the integer rule can be updated to include a digit separator. The digit
-class is mandatory but the digit separator is optional so only the digit
-class is found in the constructor, but the digit separator can be included
-with a chaining function:
+class is mandatory but the digit separator is optional so only the digit class
+is found in the constructor. The digit separator can be configured with a
+chaining function:
 
 ```go
 type IntRule2 struct {
@@ -722,7 +750,7 @@ prefixed with `0x`. See the API documentation for more information.
 Most scanning operations can be done by looking at the current character,
 which is stored in `s.This` and the next character in the stream that is
 stored in `s.Next`. In some cases, it can be easier to look further ahead
-in the stream or to even speculate and advance the scanner and cancel out
+in the stream or to even speculate and advance the scanner and bail out
 if the stream doesn't contain what is expected. Use the following for these
 cases:
 
@@ -754,13 +782,13 @@ There are two full examples provided with this package. The first is a
 [JSON scanner](scanjson/scanjson.go). The scanner for JSON is quite simple but
 JSON does have some quirks:
 
-* Number can start with a negative sign, but not a positive sign
+* Numbers can start with a negative sign, but not a positive sign.
 * Numbers cannot have leading zeros. "303" is okay, but "0303" is not.
-* Real numbers cannot have empty parts. "0.3" is valid and "3.0" is valid, but ".3" and "3." are not.
+* Real numbers cannot have empty parts. "0.3" and "3.0" is valid, but ".3" and "3." is not.
 
 There is also a [Go scanner](scango/scango.go). This one is a bit more
-complicated but be constructed mostly from predefined rules. The exceptions
-are for a rule handling imaginary numbers and a post token processor for
+complicated but is mostly constructed from predefined rules. The exceptions
+are for a rule to handle imaginary numbers and a post token processor for
 automatic semicolon insertion.
 
 ## Status

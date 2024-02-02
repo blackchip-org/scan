@@ -78,3 +78,43 @@ func TestEmpty(t *testing.T) {
 		t.Error(tok)
 	}
 }
+
+func TestReInit(t *testing.T) {
+	s := NewScannerFromString("foo", "abc")
+	s.Discard()
+	s.Keep()
+	have := s.Emit()
+	want := "b"
+	if have.Val != want {
+		t.Errorf("\n have: %v \n want: %v", have, want)
+	}
+	wantPos := Pos{Name: "foo", Line: 1, Col: 2}
+	if have.Pos != wantPos {
+		t.Errorf("\n have: %v \n want: %v", have.Pos, wantPos)
+	}
+
+	s.InitFromString("bar", "123")
+	s.Discard()
+	s.Keep()
+	have = s.Emit()
+	want = "2"
+	if have.Val != want {
+		t.Errorf("\n have: %v \n want: %v", have, want)
+	}
+	wantPos = Pos{Name: "bar", Line: 1, Col: 2}
+	if have.Pos != wantPos {
+		t.Errorf("\n have: %v \n want: %v", have.Pos, wantPos)
+	}
+}
+
+func TestInit(t *testing.T) {
+	var s Scanner
+	s.InitFromString("foo", "abc")
+	s.Discard()
+	s.Keep()
+	have := s.Emit()
+	want := "b"
+	if have.Val != want {
+		t.Errorf("\n have: %v \n want: %v", have, want)
+	}
+}
