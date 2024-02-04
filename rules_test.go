@@ -22,6 +22,18 @@ func TestBin0b(t *testing.T) {
 	RunTests(t, rules, tests)
 }
 
+func TestClassRule(t *testing.T) {
+	rules := NewRuleSet(
+		NewClassRule(Rune('-')),
+		NewClassRule(Rune('+')).WithType("plus"),
+	)
+	tests := []Test{
+		NewTest("-", "-", 1, 1, "-"),
+		NewTest("+", "+", 1, 1, "plus"),
+	}
+	RunTests(t, rules, tests)
+}
+
 func TestEscapeRules(t *testing.T) {
 	rule := NewRuleSet(StrDoubleQuote.WithEscapeRules(
 		NewCharEncRule(

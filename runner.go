@@ -1,9 +1,10 @@
 package scan
 
 type Runner struct {
-	scan      *Scanner
-	Rules     RuleSet
-	lookahead Token
+	scan  *Scanner
+	Rules RuleSet
+	This  Token
+	Next  Token
 }
 
 func NewRunner(scan *Scanner, rules RuleSet) *Runner {
@@ -11,31 +12,29 @@ func NewRunner(scan *Scanner, rules RuleSet) *Runner {
 		scan:  scan,
 		Rules: rules,
 	}
-	r.lookahead = rules.Next(scan)
+	r.This = rules.Next(scan)
+	r.Next = rules.Next(scan)
 	return r
 }
 
 func (r *Runner) HasMore() bool {
-	return r.lookahead.IsValid()
+	return !r.This.IsEndOfText()
 }
 
-func (r *Runner) Next() Token {
-	this := r.lookahead
-	r.lookahead = Token{}
-	if r.scan.HasMore() {
-		r.lookahead = r.Rules.Next(r.scan)
+func (r *Runner) Scan() Token {
+	if r.This.IsEndOfText() {
+		return r.This
 	}
-	return this
-}
-
-func (r *Runner) Peek() Token {
-	return r.lookahead
+	r.This = r.Next
+	r.Next = r.Rules.Next(r.scan)
+	return r.This
 }
 
 func (r *Runner) All() []Token {
 	var toks []Token
 	for r.HasMore() {
-		toks = append(toks, r.Next())
+		toks = append(toks, r.This)
+		r.Scan()
 	}
 	return toks
 }

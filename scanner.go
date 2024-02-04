@@ -109,6 +109,10 @@ func (t Token) IsValid() bool {
 	return t.Val != "" || t.Type != ""
 }
 
+func (t Token) IsEndOfText() bool {
+	return t.Type == EndOfTextType
+}
+
 func (t Token) Equal(t2 Token) bool {
 	return t.Val == t2.Val &&
 		t.Lit == t2.Lit &&

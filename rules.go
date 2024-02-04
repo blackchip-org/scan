@@ -52,7 +52,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 	var tok Token
 	start := s.thisPos
 
-	for s.HasMore() {
+	for {
 		if r.preTokenFunc != nil {
 			r.preTokenFunc(s)
 		}
@@ -64,14 +64,12 @@ func (r RuleSet) Next(s *Scanner) Token {
 				break
 			}
 		}
-		if !match && !tok.IsValid() {
+		if !match {
 			r.noMatchFunc(s)
-			tok = s.Emit()
+			return s.Emit()
 		}
-		if match {
-			if r.postTokenFunc != nil {
-				tok = r.postTokenFunc(s, tok)
-			}
+		if r.postTokenFunc != nil {
+			tok = r.postTokenFunc(s, tok)
 		}
 		if tok.IsValid() {
 			break
@@ -79,6 +77,7 @@ func (r RuleSet) Next(s *Scanner) Token {
 		if s.thisPos == start {
 			panic("scanner did not advance")
 		}
+		start = s.thisPos
 	}
 	return tok
 }
@@ -125,6 +124,31 @@ func (r CharEncRule) Eval(s *Scanner) bool {
 	s.Lit.WriteRune(s.This)
 	s.Val.WriteRune(to)
 	s.Skip()
+	return true
+}
+
+type ClassRule struct {
+	class Class
+	type_ string
+}
+
+func NewClassRule(c Class) ClassRule {
+	return ClassRule{class: c}
+}
+
+func (r ClassRule) WithType(t string) ClassRule {
+	r.type_ = t
+	return r
+}
+
+func (r ClassRule) Eval(s *Scanner) bool {
+	if !s.Is(r.class) {
+		return false
+	}
+	s.Keep()
+	if r.type_ != "" {
+		s.Type = r.type_
+	}
 	return true
 }
 

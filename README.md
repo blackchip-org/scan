@@ -721,6 +721,7 @@ The predefined rules are as follows:
 
 * `scan.CharEncRule`: For converting character encodings such as `\n` to their
 actual values like `U+000A`
+* `scan.ClassRule`: For runes that are a member of a class. 
 * `scan.CommentRule`: Comments which can be configured, at runtime, to emit
 tokens or discard the input.
 * `scan.HexEncRule`: For converting hex escape sequences such as `\x7f` to
