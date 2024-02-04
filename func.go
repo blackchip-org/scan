@@ -28,7 +28,7 @@ func Until(s *Scanner, c Class, fn func()) {
 	}
 }
 
-func WhileRule(s *Scanner, r Rule, fn func()) {
+func UntilRule(s *Scanner, r Rule, fn func()) {
 	for s.HasMore() {
 		if r.Eval(s) {
 			return

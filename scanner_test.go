@@ -73,9 +73,29 @@ func TestPeek(t *testing.T) {
 func TestEmpty(t *testing.T) {
 	s := NewScannerFromString("", "")
 	s.Keep()
+	want := Token{
+		Pos:  Pos{Line: 1, Col: 1},
+		Type: EndOfTextType,
+	}
 	tok := s.Emit()
-	if tok.Val != "" || tok.Type != "" {
-		t.Error(tok)
+	if !tok.Equal(want) {
+		t.Errorf("\n have: %v \n want: %v", tok, want)
+	}
+}
+
+func TestEnd(t *testing.T) {
+	s := NewScannerFromString("", "1")
+	s.Keep()
+	s.Emit()
+	Repeat(s.Keep, 10)
+
+	want := Token{
+		Pos:  Pos{Line: 1, Col: 2},
+		Type: EndOfTextType,
+	}
+	tok := s.Emit()
+	if !tok.Equal(want) {
+		t.Errorf("\n have: %v \n want: %v", tok, want)
 	}
 }
 

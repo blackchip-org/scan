@@ -160,7 +160,7 @@ func (r CommentRule) Eval(s *Scanner) bool {
 		action = s.Skip
 	}
 
-	WhileRule(s, r.end, action)
+	UntilRule(s, r.end, action)
 	return true
 }
 

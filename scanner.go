@@ -16,18 +16,19 @@ const (
 )
 
 const (
-	BinType     = "bin"
-	CommentType = "comment"
-	ErrorType   = "error"
-	HexType     = "hex"
-	IdentType   = "ident"
-	IllegalType = "illegal"
-	IntType     = "int"
-	OctType     = "oct"
-	RealType    = "real"
-	SpaceType   = "space"
-	StrType     = "str"
-	WordType    = "word"
+	BinType       = "bin"
+	CommentType   = "comment"
+	EndOfTextType = "end-of-text"
+	ErrorType     = "error"
+	HexType       = "hex"
+	IdentType     = "ident"
+	IllegalType   = "illegal"
+	IntType       = "int"
+	OctType       = "oct"
+	RealType      = "real"
+	SpaceType     = "space"
+	StrType       = "str"
+	WordType      = "word"
 )
 
 // Pos represents a position within an input stream.
@@ -56,6 +57,10 @@ type Error struct {
 	Cause   error
 }
 
+func (e Error) Equal(e2 Error) bool {
+	return e.Pos == e2.Pos && e.Message == e2.Message
+}
+
 func (e Error) Error() string {
 	if e.Cause != nil {
 		return fmt.Sprintf("%v: error: %v: %v", e.Pos, e.Message, e.Cause)
@@ -68,6 +73,21 @@ func (e Error) Unwrap() error {
 }
 
 type Errors []Error
+
+func (es Errors) Equal(es2 Errors) bool {
+	if len(es) == 0 && len(es2) == 0 {
+		return true
+	}
+	if len(es) != len(es2) {
+		return false
+	}
+	for i := range es {
+		if !es[i].Equal(es2[i]) {
+			return false
+		}
+	}
+	return true
+}
 
 func (es Errors) Error() string {
 	var messages []string
@@ -87,6 +107,14 @@ type Token struct {
 
 func (t Token) IsValid() bool {
 	return t.Val != "" || t.Type != ""
+}
+
+func (t Token) Equal(t2 Token) bool {
+	return t.Val == t2.Val &&
+		t.Lit == t2.Lit &&
+		t.Type == t2.Type &&
+		t.Pos == t2.Pos &&
+		t.Errs.Equal(t2.Errs)
 }
 
 func (t Token) String() string {
@@ -269,6 +297,12 @@ func (s *Scanner) Emit() Token {
 	// If there are no type yet, set it to the value
 	if t.Type == "" {
 		t.Type = t.Val
+	}
+
+	// If the no token value was generated and the current rune show an end of
+	// stream conditions, we are done
+	if t.Val == "" && t.Lit == "" && s.This == EndOfText {
+		t.Type = EndOfTextType
 	}
 
 	s.Val.Reset()
