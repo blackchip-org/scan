@@ -37,6 +37,11 @@ func UntilRule(s *Scanner, r Rule, fn func()) {
 	}
 }
 
+func All(s *Scanner) string {
+	While(s, IsAny, s.Keep)
+	return s.Emit().Val
+}
+
 func Line(s *Scanner) string {
 	Until(s, Rune('\n'), s.Keep)
 	line := strings.TrimSpace(s.Emit().Val)
