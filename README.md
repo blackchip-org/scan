@@ -776,7 +776,7 @@ automatic semicolon insertion.
 A scanner, parser, and formatter for angles in degrees, minutes, and seconds
 can be found here:
 
-    https://github.com/blackchip-org/dms
+https://github.com/blackchip-org/dms
 
 ## Status
 
