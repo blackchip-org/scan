@@ -137,19 +137,19 @@ over the stream while it has data and adding to the token buffer as long as the
 current rune is a zero or a one:
 
 ```go
-	s := scan.NewScannerFromString("", "1010234abc!")
-	for s.HasMore() {
-		if s.This == '0' || s.This == '1' {
-			s.Keep()
-			continue
-		}
-		break
-	}
-	tok := s.Emit()
-	fmt.Println(tok.Val)
+    s := scan.NewScannerFromString("", "1010234abc!")
+    for s.HasMore() {
+        if s.This == '0' || s.This == '1' {
+            s.Keep()
+            continue
+        }
+        break
+    }
+    tok := s.Emit()
+    fmt.Println(tok.Val)
 
-	// Output:
-	// 1010
+    // Output:
+    // 1010
 ```
 [Example 1](examples/readme/example_1_test.go)
 
@@ -167,19 +167,19 @@ type of function is a `scan.Class` function and it is used to determine if a
 rune is member of that class. Example:
 
 ```go
-	isDigit09 := func(r rune) bool {
-		return r >= '0' && r <= '9'
-	}
+    isDigit09 := func(r rune) bool {
+        return r >= '0' && r <= '9'
+    }
 
-	s := scan.NewScannerFromString("", "1010234abc!")
-	for s.HasMore() && isDigit09(s.This) {
-		s.Keep()
-	}
-	tok := s.Emit()
-	fmt.Println(tok.Val)
+    s := scan.NewScannerFromString("", "1010234abc!")
+    for s.HasMore() && isDigit09(s.This) {
+        s.Keep()
+    }
+    tok := s.Emit()
+    fmt.Println(tok.Val)
 
-	// Output:
-	// 1010234
+    // Output:
+    // 1010234
 ```
 [Example 2](examples/readme/example_2_test.go)
 
@@ -259,15 +259,15 @@ The previous example can now be updated using the predefined class for
 base 10 numbers and the `s.Is()` method:
 
 ```go
-	s := scan.NewScannerFromString("", "1010234abc!")
-	for s.HasMore() && scan.IsDigit09(s.This) {
-		s.Keep()
-	}
-	tok := s.Emit()
-	fmt.Println(tok.Val)
+    s := scan.NewScannerFromString("", "1010234abc!")
+    for s.HasMore() && scan.IsDigit09(s.This) {
+        s.Keep()
+    }
+    tok := s.Emit()
+    fmt.Println(tok.Val)
 
-	// Output:
-	// 1010234
+    // Output:
+    // 1010234
 
 ```
 [Example 3](examples/readme/example_3_test.go)
@@ -314,13 +314,13 @@ The example can now be updated to remove the loop with a call to
 `scan.While()`:
 
 ```go
-	s := scan.NewScannerFromString("", "1010234abc!")
-	scan.While(s, scan.IsDigit09, s.Keep)
-	tok := s.Emit()
-	fmt.Println(tok.Val)
+    s := scan.NewScannerFromString("", "1010234abc!")
+    scan.While(s, scan.IsDigit09, s.Keep)
+    tok := s.Emit()
+    fmt.Println(tok.Val)
 
-	// Output:
-	// 1010234
+    // Output:
+    // 1010234
 ```
 [Example 4](examples/readme/example_4_test.go)
 
@@ -336,14 +336,14 @@ scanner to the next rune. The example below now discards any whitespace found
 at the beginning of the stream:
 
 ```go
-	s := scan.NewScannerFromString("", " \t 1010234abc!")
-	scan.While(s, scan.IsSpace, s.Discard)
-	scan.While(s, scan.IsDigit09, s.Keep)
-	tok := s.Emit()
-	fmt.Println(tok.Val)
+    s := scan.NewScannerFromString("", " \t 1010234abc!")
+    scan.While(s, scan.IsSpace, s.Discard)
+    scan.While(s, scan.IsDigit09, s.Keep)
+    tok := s.Emit()
+    fmt.Println(tok.Val)
 
-	// Output:
-	// 1010234
+    // Output:
+    // 1010234
 ```
 [Example 5](examples/readme/example_5_test.go)
 
@@ -404,42 +404,42 @@ Now create a main loop that checks each function for a match and then collects
 all of the tokens seen along the way:
 
 ```go
-	scanFuncs := []func(*scan.Scanner) bool{
-		scanSpace,
-		scanWord,
-		scanInt,
-	}
+    scanFuncs := []func(*scan.Scanner) bool{
+        scanSpace,
+        scanWord,
+        scanInt,
+    }
 
-	var toks []scan.Token
-	s := scan.NewScannerFromString("example6", "abc 123 !@#  \tdef456")
-	for s.HasMore() {
-		match := false
-		for _, fn := range scanFuncs {
-			if match = fn(s); match {
-				toks = append(toks, s.Emit())
-				break
-			}
-		}
-		if !match {
-			scan.Until(s, scan.IsSpace, s.Keep)
-			s.Illegal("unexpected %v", scan.Quote(s.Val.String()))
-			toks = append(toks, s.Emit())
-		}
-	}
-	fmt.Println(scan.FormatTokenTable(toks))
+    var toks []scan.Token
+    s := scan.NewScannerFromString("example6", "abc 123 !@#  \tdef456")
+    for s.HasMore() {
+        match := false
+        for _, fn := range scanFuncs {
+            if match = fn(s); match {
+                toks = append(toks, s.Emit())
+                break
+            }
+        }
+        if !match {
+            scan.Until(s, scan.IsSpace, s.Keep)
+            s.Illegal("unexpected %v", scan.Quote(s.Val.String()))
+            toks = append(toks, s.Emit())
+        }
+    }
+    fmt.Println(scan.FormatTokenTable(toks))
 
-	// Output:
-	//
-	// Pos            Type     Value         Literal
-	// example6:1:1   word     "abc"         "abc"
-	// example6:1:4   space    " "           " "
-	// example6:1:5   int      "123"         "123"
-	// example6:1:8   space    " "           " "
-	// example6:1:9   illegal  "!@#"         "!@#"
-	// example6:1:12: error: unexpected "!@#"
-	// example6:1:12  space    "  {!ch:\t}"  "  {!ch:\t}"
-	// example6:1:15  word     "def"         "def"
-	// example6:1:18  int      "456"         "456"
+    // Output:
+    //
+    // Pos            Type     Value         Literal
+    // example6:1:1   word     "abc"         "abc"
+    // example6:1:4   space    " "           " "
+    // example6:1:5   int      "123"         "123"
+    // example6:1:8   space    " "           " "
+    // example6:1:9   illegal  "!@#"         "!@#"
+    // example6:1:12: error: unexpected "!@#"
+    // example6:1:12  space    "  {!ch:\t}"  "  {!ch:\t}"
+    // example6:1:15  word     "def"         "def"
+    // example6:1:18  int      "456"         "456"
 
 ```
 [Example 6](examples/readme/example_6_test.go)
@@ -602,37 +602,37 @@ chaining function:
 
 ```go
 type IntRule2 struct {
-	isDigit    scan.Class
-	isDigitSep scan.Class
+    isDigit    scan.Class
+    isDigitSep scan.Class
 }
 
 func NewIntRule2(isDigit scan.Class) IntRule2 {
-	return IntRule2{
-		isDigit:    isDigit,
-		isDigitSep: scan.IsNone,
-	}
+    return IntRule2{
+        isDigit:    isDigit,
+        isDigitSep: scan.IsNone,
+    }
 }
 
 func (r IntRule2) WithDigitSep(isDigitSep scan.Class) IntRule2 {
-	r.isDigitSep = isDigitSep
-	return r
+    r.isDigitSep = isDigitSep
+    return r
 }
 
 func (r IntRule2) Eval(s *scan.Scanner) bool {
-	if !r.isDigit(s.This) {
-		return false
-	}
-	s.Keep()
-	for s.HasMore() {
-		if r.isDigit(s.This) {
-			s.Keep()
-		} else if r.isDigitSep(s.This) {
-			s.Skip()
-		} else {
-			break
-		}
-	}
-	return true
+    if !r.isDigit(s.This) {
+        return false
+    }
+    s.Keep()
+    for s.HasMore() {
+        if r.isDigit(s.This) {
+            s.Keep()
+        } else if r.isDigitSep(s.This) {
+            s.Skip()
+        } else {
+            break
+        }
+    }
+    return true
 }
 ```
 [Example 8](examples/readme/example_8_test.go)
@@ -641,30 +641,30 @@ Now update the rule set with the new rule and modify the input to include some
 digit separators:
 
 ```go
-	rules := scan.NewRuleSet(
-		NewSpaceRule(scan.IsSpace),
-		NewWordRule(scan.IsLetter),
-		NewIntRule2(scan.IsDigit).
-			WithDigitSep(scan.Rune(',')),
-	).WithNoMatchFunc(UnexpectedUntil(scan.IsSpace))
+    rules := scan.NewRuleSet(
+        NewSpaceRule(scan.IsSpace),
+        NewWordRule(scan.IsLetter),
+        NewIntRule2(scan.IsDigit).
+            WithDigitSep(scan.Rune(',')),
+    ).WithNoMatchFunc(UnexpectedUntil(scan.IsSpace))
 
-	s := scan.NewScannerFromString("example8", "abc 1,234 !@#  \tdef45,678")
-	runner := scan.NewRunner(s, rules)
-	toks := runner.All()
-	fmt.Println(scan.FormatTokenTable(toks))
+    s := scan.NewScannerFromString("example8", "abc 1,234 !@#  \tdef45,678")
+    runner := scan.NewRunner(s, rules)
+    toks := runner.All()
+    fmt.Println(scan.FormatTokenTable(toks))
 
-	// Output:
-	//
-	// Pos            Type     Value         Literal
-	// example8:1:1   word     "abc"         "abc"
-	// example8:1:4   space    " "           " "
-	// example8:1:5   1234     "1234"        "1,234"
-	// example8:1:10  space    " "           " "
-	// example8:1:11  illegal  "!@#"         "!@#"
-	// example8:1:14: error: unexpected "!@#"
-	// example8:1:14  space    "  {!ch:\t}"  "  {!ch:\t}"
-	// example8:1:17  word     "def"         "def"
-	// example8:1:20  45678    "45678"       "45,678"
+    // Output:
+    //
+    // Pos            Type     Value         Literal
+    // example8:1:1   word     "abc"         "abc"
+    // example8:1:4   space    " "           " "
+    // example8:1:5   1234     "1234"        "1,234"
+    // example8:1:10  space    " "           " "
+    // example8:1:11  illegal  "!@#"         "!@#"
+    // example8:1:14: error: unexpected "!@#"
+    // example8:1:14  space    "  {!ch:\t}"  "  {!ch:\t}"
+    // example8:1:17  word     "def"         "def"
+    // example8:1:20  45678    "45678"       "45,678"
 ```
 [Example 8](examples/readme/example_8_test.go)
 
@@ -674,29 +674,29 @@ The scan package already has rules defined for reading the token types used
 so far. The example can now be updated to use those rules instead:
 
 ```go
-	rules := scan.NewRuleSet(
-		scan.KeepSpaceRule,
-		scan.NewWhileRule(scan.IsLetter, scan.WordType),
-		scan.IntRule.WithDigitSep(scan.Rune(',')),
-	).WithNoMatchFunc(scan.UnexpectedUntil(scan.IsSpace))
+    rules := scan.NewRuleSet(
+        scan.KeepSpaceRule,
+        scan.NewWhileRule(scan.IsLetter, scan.WordType),
+        scan.IntRule.WithDigitSep(scan.Rune(',')),
+    ).WithNoMatchFunc(scan.UnexpectedUntil(scan.IsSpace))
 
-	s := scan.NewScannerFromString("example9", "abc 1,234 !@#  \tdef45,678")
-	runner := scan.NewRunner(s, rules)
-	toks := runner.All()
-	fmt.Println(scan.FormatTokenTable(toks))
+    s := scan.NewScannerFromString("example9", "abc 1,234 !@#  \tdef45,678")
+    runner := scan.NewRunner(s, rules)
+    toks := runner.All()
+    fmt.Println(scan.FormatTokenTable(toks))
 
-	// Output:
-	//
-	// Pos            Type     Value         Literal
-	// example9:1:1   word     "abc"         "abc"
-	// example9:1:4   space    " "           " "
-	// example9:1:5   int      "1234"        "1,234"
-	// example9:1:10  space    " "           " "
-	// example9:1:11  illegal  "!@#"         "!@#"
-	// example9:1:14: error: unexpected "!@#"
-	// example9:1:14  space    "  {!ch:\t}"  "  {!ch:\t}"
-	// example9:1:17  word     "def"         "def"
-	// example9:1:20  int      "45678"       "45,678"
+    // Output:
+    //
+    // Pos            Type     Value         Literal
+    // example9:1:1   word     "abc"         "abc"
+    // example9:1:4   space    " "           " "
+    // example9:1:5   int      "1234"        "1,234"
+    // example9:1:10  space    " "           " "
+    // example9:1:11  illegal  "!@#"         "!@#"
+    // example9:1:14: error: unexpected "!@#"
+    // example9:1:14  space    "  {!ch:\t}"  "  {!ch:\t}"
+    // example9:1:17  word     "def"         "def"
+    // example9:1:20  int      "45678"       "45,678"
 ```
 [Example 9](examples/readme/example_9_test.go)
 
