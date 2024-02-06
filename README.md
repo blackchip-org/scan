@@ -773,10 +773,8 @@ complicated but is mostly constructed from predefined rules. The exceptions
 are for a rule to handle imaginary numbers and a post token processor for
 automatic semicolon insertion.
 
-A scanner, parser, and formatter for angles in degrees, minutes, and seconds
-can be found here:
-
-https://github.com/blackchip-org/dms
+In a separate repository, there is an example of a scanner, parser, and a
+formatter for [DMS angles](https://github.com/blackchip-org/dms).
 
 ## Status
 
