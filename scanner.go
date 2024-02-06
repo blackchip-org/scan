@@ -142,12 +142,14 @@ type Scanner struct {
 	Next    rune
 	Val     strings.Builder
 	Lit     strings.Builder
+	Pos     Pos
 	Errs    Errors
 	Type    string
 	src     *peek.Reader
 	srcErr  *Error
-	thisPos Pos
 	tokPos  Pos
+	prevPos Pos
+	stalls  int
 }
 
 func NewScanner(name string, src io.Reader) *Scanner {
@@ -179,7 +181,7 @@ func (s *Scanner) Init(name string, src io.Reader) {
 	s.srcErr = nil
 	s.next()
 	s.next()
-	s.thisPos = NewPos(name)
+	s.Pos = NewPos(name)
 	s.tokPos = NewPos(name)
 }
 
@@ -278,13 +280,24 @@ func (s *Scanner) Undo() {
 	s.Val.Reset()
 	s.Lit.Reset()
 	s.Type = ""
-	s.thisPos = s.tokPos
+	s.Pos = s.tokPos
 }
 
 // Emit returns the token that has been built and resets the builder for the
 // next token.
 func (s *Scanner) Emit() Token {
 	var t Token
+
+	if s.tokPos == s.prevPos {
+		s.stalls++
+		if s.stalls > 10 {
+			s.prevPos = Pos{}
+			s.stalls = 0
+			panic("scanner is not advancing")
+		}
+	} else {
+		s.stalls = 0
+	}
 
 	t.Val = s.Val.String()
 	t.Lit = s.Lit.String()
@@ -313,15 +326,22 @@ func (s *Scanner) Emit() Token {
 	s.Lit.Reset()
 	s.Type = ""
 	s.Errs = nil
-	s.tokPos = s.thisPos
+	s.tokPos = s.Pos
 
 	return t
+}
+
+func (s *Scanner) Eval(r Rule) (Token, bool) {
+	if !r.Eval(s) {
+		return Token{}, false
+	}
+	return s.Emit(), true
 }
 
 func (s *Scanner) Illegal(format string, args ...any) {
 	s.Type = IllegalType
 	s.Errs = append(s.Errs, Error{
-		Pos:     s.thisPos,
+		Pos:     s.Pos,
 		Message: fmt.Sprintf(format, args...),
 	})
 }
@@ -331,10 +351,10 @@ func (s *Scanner) next() {
 		return
 	}
 	if s.This == '\n' {
-		s.thisPos.Line++
-		s.thisPos.Col = 1
+		s.Pos.Line++
+		s.Pos.Col = 1
 	} else {
-		s.thisPos.Col++
+		s.Pos.Col++
 	}
 
 	var err error
@@ -346,7 +366,7 @@ func (s *Scanner) next() {
 		// as an actual error
 		if !errors.Is(err, io.EOF) {
 			s.srcErr = &Error{
-				Pos:     s.thisPos,
+				Pos:     s.Pos,
 				Message: fmt.Sprintf("error reading stream: %v", err),
 				Cause:   err,
 			}

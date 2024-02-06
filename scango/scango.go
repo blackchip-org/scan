@@ -78,7 +78,7 @@ var (
 		WithEscape('\\').
 		WithEscapeRules(EscapeRules(StringType)...)
 	Symbols    = scan.Literal(OpsPunct...)
-	Whitespace = scan.NewSpaceRule(scan.Rune(' ', '\t', '\r'))
+	Whitespace = scan.NewWhileClassRule(scan.Rune(' ', '\t', '\r'), "").WithKeep(false)
 )
 
 func EscapeRules(type_ string) []scan.Rule {

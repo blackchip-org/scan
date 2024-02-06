@@ -25,7 +25,7 @@ var (
 		"{", "}", "[", "]", ":", ",",
 		"true", "false", "null",
 	)
-	Whitespace = scan.NewSpaceRule(scan.Rune(' ', '\n', '\r', '\t'))
+	Whitespace = scan.NewWhileClassRule(scan.Rune(' ', '\n', '\r', '\t'), "").WithKeep(false)
 )
 
 type Context struct {

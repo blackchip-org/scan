@@ -8,8 +8,8 @@ import (
 
 func Example_example9() {
 	rules := scan.NewRuleSet(
-		scan.NewSpaceRule(scan.Whitespace).WithKeep(true),
-		scan.NewWordRule(scan.Letter),
+		scan.KeepWhitespaceRule,
+		scan.NewWhileClassRule(scan.Letter, scan.WordType),
 		scan.Int.WithDigitSep(scan.Rune(',')),
 	).WithNoMatchFunc(scan.UnexpectedUntil(scan.Whitespace))
 

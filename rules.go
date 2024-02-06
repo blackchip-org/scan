@@ -50,7 +50,7 @@ func (r RuleSet) Eval(s *Scanner) bool {
 
 func (r RuleSet) Next(s *Scanner) Token {
 	var tok Token
-	start := s.thisPos
+	start := s.Pos
 
 	for {
 		if r.preTokenFunc != nil {
@@ -74,10 +74,10 @@ func (r RuleSet) Next(s *Scanner) Token {
 		if tok.IsValid() {
 			break
 		}
-		if s.thisPos == start {
+		if s.Pos == start {
 			panic("scanner did not advance")
 		}
-		start = s.thisPos
+		start = s.Pos
 	}
 	return tok
 }
@@ -672,37 +672,6 @@ var (
 	StrSingleQuote = NewStrRule('\'', '\'').WithEscape('\\')
 )
 
-type SpaceRule struct {
-	keep  bool
-	space Class
-}
-
-func NewSpaceRule(space Class) SpaceRule {
-	return SpaceRule{space: space}
-}
-
-func (r SpaceRule) WithKeep(b bool) SpaceRule {
-	r.keep = b
-	return r
-}
-
-func (r SpaceRule) Eval(s *Scanner) bool {
-	if !s.Is(r.space) {
-		return false
-	}
-
-	var action func()
-	if r.keep {
-		s.Type = SpaceType
-		action = s.Keep
-	} else {
-		action = s.Discard
-	}
-
-	While(s, r.space, action)
-	return true
-}
-
 type trueRule struct{}
 
 func (r trueRule) Eval(s *Scanner) bool {
@@ -711,19 +680,40 @@ func (r trueRule) Eval(s *Scanner) bool {
 
 var TrueRule = trueRule{}
 
-type WordRule struct {
-	letter Class
+type WhileClassRule struct {
+	keep  bool
+	class Class
+	type_ string
 }
 
-func NewWordRule(letter Class) WordRule {
-	return WordRule{letter: letter}
+func NewWhileClassRule(space Class, type_ string) WhileClassRule {
+	return WhileClassRule{class: space, type_: type_, keep: true}
 }
 
-func (r WordRule) Eval(s *Scanner) bool {
-	if !s.Is(r.letter) {
+func (r WhileClassRule) WithKeep(b bool) WhileClassRule {
+	r.keep = b
+	return r
+}
+
+func (r WhileClassRule) Eval(s *Scanner) bool {
+	if !s.Is(r.class) {
 		return false
 	}
-	s.Type = WordType
-	While(s, r.letter, s.Keep)
+
+	var action func()
+	if r.keep {
+		s.Type = r.type_
+		action = s.Keep
+	} else {
+		action = s.Discard
+	}
+
+	While(s, r.class, action)
 	return true
 }
+
+var (
+	SkipWhitespaceRule = NewWhileClassRule(Whitespace, SpaceType).WithKeep(false)
+	KeepWhitespaceRule = NewWhileClassRule(Whitespace, SpaceType)
+	WordRule           = NewWhileClassRule(Not(Whitespace), WordType)
+)

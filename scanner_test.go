@@ -138,3 +138,17 @@ func TestInit(t *testing.T) {
 		t.Errorf("\n have: %v \n want: %v", have, want)
 	}
 }
+
+func TestNotAdvancing(t *testing.T) {
+	var s Scanner
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+
+	for i := 0; i < 100; i++ {
+		s.Emit()
+	}
+}

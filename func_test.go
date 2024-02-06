@@ -24,7 +24,7 @@ func TestRepeat(t *testing.T) {
 }
 
 func TestWhile(t *testing.T) {
-	s := NewScannerFromString("", "   123abc")
+	s := NewScannerFromString("", "   123abc456")
 	tests := []struct {
 		val   string
 		class Class
@@ -32,7 +32,8 @@ func TestWhile(t *testing.T) {
 	}{
 		{"", Whitespace, s.Discard},
 		{"123", Digit, s.Keep},
-		{"abc", Any, s.Keep},
+		{"abc", Letter, s.Keep},
+		{"456", Not(Whitespace), s.Keep},
 	}
 
 	for _, test := range tests {
@@ -64,6 +65,46 @@ func TestQuote(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.in, func(t *testing.T) {
 			have := Quote(test.in)
+			if have != test.want {
+				t.Errorf("\n have: %v \n want: %v", have, test.want)
+			}
+		})
+	}
+}
+
+func TestWord(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{`abcd`, `abcd`},
+		{`    abcd`, `abcd`},
+		{"  ab\ncd", `ab`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.in, func(t *testing.T) {
+			s := NewScannerFromString("", test.in)
+			have := Word(s)
+			if have != test.want {
+				t.Errorf("\n have: %v \n want: %v", have, test.want)
+			}
+		})
+	}
+}
+
+func TestLine(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{"  abcd  \n 1234", "abcd"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.in, func(t *testing.T) {
+			s := NewScannerFromString("", test.in)
+			have := Line(s)
 			if have != test.want {
 				t.Errorf("\n have: %v \n want: %v", have, test.want)
 			}

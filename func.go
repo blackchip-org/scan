@@ -16,7 +16,7 @@ func Repeat(fn func(), n int) {
 
 // While calls function fn while this rune is a member of class c.
 func While(s *Scanner, c Class, fn func()) {
-	for c(s.This) {
+	for s.HasMore() && c(s.This) {
 		fn()
 	}
 }
@@ -35,6 +35,19 @@ func UntilRule(s *Scanner, r Rule, fn func()) {
 		}
 		fn()
 	}
+}
+
+func Line(s *Scanner) string {
+	Until(s, Rune('\n'), s.Keep)
+	line := strings.TrimSpace(s.Emit().Val)
+	s.Discard()
+	return line
+}
+
+func Word(s *Scanner) string {
+	While(s, Whitespace, s.Discard)
+	While(s, Not(Whitespace), s.Keep)
+	return s.Emit().Val
 }
 
 func UnexpectedRune() func(*Scanner) {
