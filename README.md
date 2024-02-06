@@ -286,7 +286,7 @@ a function that should be called for each matching character. For example, to
 add characters to the current token while digits are seen:
 
 ```go
-    scan.While(s, scan.Digit09, s.Keep)
+    scan.While(s, scan.IsDigit09, s.Keep)
 ```
 
 #### `scan.Until()`
@@ -296,7 +296,7 @@ stream until a character belongs to the provided class. For example, to add any
 non-whitespace characters to the curren token:
 
 ```go
-    scan.Until(s, scan.Whitespace, s.Keep)
+    scan.Until(s, scan.IsSpace, s.Keep)
 ```
 
 #### `scan.Repeat()`
