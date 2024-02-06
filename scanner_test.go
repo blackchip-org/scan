@@ -31,11 +31,11 @@ func TestKeep(t *testing.T) {
 
 func TestUndo(t *testing.T) {
 	s := NewScannerFromString("", "123abcd")
-	While(s, Digit, s.Discard)
+	While(s, IsDigit, s.Discard)
 	s.Keep()
 	s.Keep()
 	s.Undo()
-	While(s, Any, s.Keep)
+	While(s, IsAny, s.Keep)
 	tok := s.Emit()
 	want := "abcd"
 	if tok.Val != want {

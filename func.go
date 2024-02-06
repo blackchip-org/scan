@@ -44,9 +44,13 @@ func Line(s *Scanner) string {
 	return line
 }
 
+func Space(s *Scanner) {
+	While(s, IsSpace, s.Discard)
+}
+
 func Word(s *Scanner) string {
-	While(s, Whitespace, s.Discard)
-	While(s, Not(Whitespace), s.Keep)
+	While(s, IsSpace, s.Discard)
+	While(s, Not(IsSpace), s.Keep)
 	return s.Emit().Val
 }
 

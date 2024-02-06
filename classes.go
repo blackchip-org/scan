@@ -54,82 +54,82 @@ func Rune(rs ...rune) Class {
 }
 
 var (
-	// Any returns true as long as there is a rune available in the input
+	// IsAny returns true as long as there is a rune available in the input
 	// stream.
-	Any Class = func(r rune) bool {
+	IsAny Class = func(r rune) bool {
 		return r != EndOfText
 	}
 
-	// Currency returns true when given a rune that is a currency symbol as
+	// IsCurrency returns true when given a rune that is a currency symbol as
 	// defined by Unicode.
-	Currency Class = func(r rune) bool {
+	IsCurrency Class = func(r rune) bool {
 		return unicode.Is(unicode.Sc, r)
 	}
 
-	// Digit returns true when given a digit as defined by Unicode.
-	Digit Class = unicode.IsDigit
+	// IsDigit returns true when given a digit as defined by Unicode.
+	IsDigit Class = unicode.IsDigit
 
-	// Digit01 returns true when given a valid binary digit.
-	Digit01 Class = Rune('0', '1')
+	// IsDigit01 returns true when given a valid binary digit.
+	IsDigit01 Class = Rune('0', '1')
 
-	// Digit07 returns true when given a valid octal digit.
-	Digit07 Class = Range('0', '7')
+	// IsDigit07 returns true when given a valid octal digit.
+	IsDigit07 Class = Range('0', '7')
 
-	// Digit09 returns true when given a valid decimal digit.
-	Digit09 Class = Range('0', '9')
+	// IsDigit09 returns true when given a valid decimal digit.
+	IsDigit09 Class = Range('0', '9')
 
-	// Digit0F returns true when given a valid hexadecimal digit.
-	Digit0F Class = Or(
-		Digit09,
+	// IsDigit0F returns true when given a valid hexadecimal digit.
+	IsDigit0F Class = Or(
+		IsDigit09,
 		Range('a', 'f'),
 		Range('A', 'F'),
 	)
 
-	// Letter returns true when given rune is a letter as defined by Unicode.
-	Letter Class = unicode.IsLetter
+	// IsLetter returns true when given rune is a letter as defined by Unicode.
+	IsLetter Class = unicode.IsLetter
 
-	// LetterAZ returns true when given letters from the Latin alphabet.
-	LetterAZ Class = Or(
+	// IsLetterAZ returns true when given letters from the Latin alphabet.
+	IsLetterAZ Class = Or(
 		Range('a', 'z'),
 		Range('A', 'Z'),
 	)
 
-	// LetterUnder returns true when given letters as defined by Unicode
+	// IsLetterUnder returns true when given letters as defined by Unicode
 	// or an underscore.
-	LetterUnder = Or(
-		Letter,
+	IsLetterUnder = Or(
+		IsLetter,
 		Rune('_'),
 	)
 
-	// LetterDigitUnder returns true when given letters as digits as defined
+	// IsLetterDigitUnder returns true when given letters as digits as defined
 	// by Unicode or an underscore.
-	LetterDigitUnder = Or(
-		LetterUnder,
-		Digit,
+	IsLetterDigitUnder = Or(
+		IsLetterUnder,
+		IsDigit,
 	)
 
-	// None always returns false.
-	None Class = func(r rune) bool {
+	// IsNone always returns false.
+	IsNone Class = func(r rune) bool {
 		return false
 	}
 
-	// Printable returns true when given a rune that is printable as defined
+	// IsPrintable returns true when given a rune that is printable as defined
 	// by Unicode.
-	Printable Class = unicode.IsPrint
+	IsPrintable Class = unicode.IsPrint
 
-	// Rune8 returns true when given a rune that can be represented by
+	// IsRune8 returns true when given a rune that can be represented by
 	// an 8-bit number.
-	Rune8 Class = Range(0, 0xff)
+	IsRune8 Class = Range(0, 0xff)
 
-	// Rune16 returns true when given a rune that can be represented by
+	// IsRune16 returns true when given a rune that can be represented by
 	// a 16-bit number.
-	Rune16 Class = Range(0, 0xffff)
+	IsRune16 Class = Range(0, 0xffff)
 
-	// Sign returns true when the rune is a positive (+) or negative (-)
+	// IsSign returns true when the rune is a positive (+) or negative (-)
 	// numeric symbol.
-	Sign Class = Rune('+', '-')
+	IsSign Class = Rune('+', '-')
 
-	// Whitespace returns true when the given rune is whitespace as
+	// IsSpace returns true when the given rune is whitespace as
 	// defined by Unicode.
-	Whitespace Class = unicode.IsSpace
+	IsSpace Class = unicode.IsSpace
 )

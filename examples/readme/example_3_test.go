@@ -8,7 +8,7 @@ import (
 
 func Example_example3() {
 	s := scan.NewScannerFromString("", "1010234abc!")
-	for s.HasMore() && s.Is(scan.Digit09) {
+	for s.HasMore() && scan.IsDigit09(s.This) {
 		s.Keep()
 	}
 	tok := s.Emit()

@@ -128,12 +128,12 @@ func (r CharEncRule) Eval(s *Scanner) bool {
 }
 
 type ClassRule struct {
-	class Class
-	type_ string
+	isClass Class
+	type_   string
 }
 
-func NewClassRule(c Class) ClassRule {
-	return ClassRule{class: c}
+func NewClassRule(isClass Class) ClassRule {
+	return ClassRule{isClass: isClass}
 }
 
 func (r ClassRule) WithType(t string) ClassRule {
@@ -142,7 +142,7 @@ func (r ClassRule) WithType(t string) ClassRule {
 }
 
 func (r ClassRule) Eval(s *Scanner) bool {
-	if !s.Is(r.class) {
+	if !r.isClass(s.This) {
 		return false
 	}
 	s.Keep()
@@ -217,7 +217,7 @@ func (r HexEncRule) Eval(s *Scanner) bool {
 	digits := make([]rune, r.digits)
 	for i := 0; i < r.digits; i++ {
 		ch := s.Peek(i)
-		if !Digit0F(ch) {
+		if !IsDigit0F(ch) {
 			s.Illegal("invalid encoding: %v", Quote(string(digits[:i])))
 			Repeat(s.Keep, i)
 			return true
@@ -246,21 +246,21 @@ func (r HexEncRule) Eval(s *Scanner) bool {
 }
 
 var (
-	Hex2Enc = NewHexEncRule('x', 2)
-	Hex4Enc = NewHexEncRule('u', 4)
-	Hex8Enc = NewHexEncRule('U', 8)
+	Hex2EncRule = NewHexEncRule('x', 2)
+	Hex4EncRule = NewHexEncRule('u', 4)
+	Hex8EncRule = NewHexEncRule('U', 8)
 )
 
 type IdentRule struct {
-	head     Class
-	tail     Class
+	isHead   Class
+	isTail   Class
 	keywords map[string]struct{}
 }
 
-func NewIdentRule(head Class, tail Class) IdentRule {
+func NewIdentRule(isHead Class, isTail Class) IdentRule {
 	return IdentRule{
-		head:     head,
-		tail:     tail,
+		isHead:   isHead,
+		isTail:   isTail,
 		keywords: make(map[string]struct{}),
 	}
 }
@@ -275,11 +275,11 @@ func (r IdentRule) WithKeywords(ks ...string) IdentRule {
 }
 
 func (r IdentRule) Eval(s *Scanner) bool {
-	if !s.Is(r.head) {
+	if !r.isHead(s.This) {
 		return false
 	}
 	s.Keep()
-	While(s, r.tail, s.Keep)
+	While(s, r.isTail, s.Keep)
 	if _, ok := r.keywords[s.Val.String()]; !ok {
 		s.Type = IdentType
 	}
@@ -287,7 +287,7 @@ func (r IdentRule) Eval(s *Scanner) bool {
 }
 
 var (
-	Ident IdentRule = NewIdentRule(LetterUnder, LetterDigitUnder)
+	StandardIdentRule IdentRule = NewIdentRule(IsLetterUnder, IsLetterDigitUnder)
 )
 
 type trieNode struct {
@@ -351,14 +351,14 @@ func (r LiteralRule) Eval(s *Scanner) bool {
 type NumRule struct {
 	intType                string
 	realType               string
-	digit                  Class
-	prefix                 Rule
-	sign                   Class
-	digitSep               Class
-	decSep                 Class
-	exp                    Class
-	expSign                Class
-	suffix                 []Rule
+	isDigit                Class
+	prefixRule             Rule
+	isSign                 Class
+	isDigitSep             Class
+	isDecSep               Class
+	isExp                  Class
+	isExpSign              Class
+	suffixRules            []Rule
 	leadingDigitSepAllowed bool
 	leadingZeroAllowed     bool
 	emptyPartsAllowed      bool
@@ -366,8 +366,15 @@ type NumRule struct {
 
 func NewNumRule(digit Class) NumRule {
 	return NumRule{
-		digit:              digit,
-		prefix:             TrueRule,
+		intType:            IntType,
+		realType:           RealType,
+		isDigit:            digit,
+		prefixRule:         TrueRule,
+		isSign:             IsNone,
+		isDigitSep:         IsNone,
+		isDecSep:           IsNone,
+		isExp:              IsNone,
+		isExpSign:          IsNone,
 		leadingZeroAllowed: true,
 		emptyPartsAllowed:  true,
 	}
@@ -384,37 +391,37 @@ func (r NumRule) WithRealType(t string) NumRule {
 }
 
 func (r NumRule) WithSign(c Class) NumRule {
-	r.sign = c
+	r.isSign = c
 	return r
 }
 
 func (r NumRule) WithPrefix(rule Rule) NumRule {
-	r.prefix = rule
+	r.prefixRule = rule
 	return r
 }
 
 func (r NumRule) WithDigitSep(c Class) NumRule {
-	r.digitSep = c
+	r.isDigitSep = c
 	return r
 }
 
 func (r NumRule) WithDecSep(c Class) NumRule {
-	r.decSep = c
+	r.isDecSep = c
 	return r
 }
 
 func (r NumRule) WithExp(c Class) NumRule {
-	r.exp = c
+	r.isExp = c
 	return r
 }
 
 func (r NumRule) WithExpSign(c Class) NumRule {
-	r.expSign = c
+	r.isExpSign = c
 	return r
 }
 
 func (r NumRule) WithSuffix(rules ...Rule) NumRule {
-	r.suffix = rules
+	r.suffixRules = rules
 	return r
 }
 
@@ -434,14 +441,14 @@ func (r NumRule) WithEmptyPartsAllowed(b bool) NumRule {
 }
 
 func (r NumRule) Eval(s *Scanner) bool {
-	if s.Is(r.sign) {
+	if r.isSign(s.This) {
 		s.Keep()
 	}
-	if !r.prefix.Eval(s) {
+	if !r.prefixRule.Eval(s) {
 		s.Undo()
 		return false
 	}
-	if s.Is(r.digitSep) && r.leadingDigitSepAllowed {
+	if r.isDigitSep(s.This) && r.leadingDigitSepAllowed {
 		s.Skip()
 	}
 
@@ -451,7 +458,7 @@ func (r NumRule) Eval(s *Scanner) bool {
 	}
 
 	if !r.leadingZeroAllowed && s.This == '0' {
-		if !s.NextIs(r.decSep) && !s.NextIs(r.exp) {
+		if !r.isDecSep(s.Next) && !r.isExp(s.Next) {
 			s.Keep()
 			return true
 		}
@@ -461,10 +468,10 @@ func (r NumRule) Eval(s *Scanner) bool {
 	scanDigits := func() {
 		for s.HasMore() {
 			switch {
-			case s.Is(r.digit):
+			case r.isDigit(s.This):
 				seenDigit = true
 				s.Keep()
-			case s.Is(r.digitSep) && s.NextIs(r.digit) && r.digit(s.Peek(-1)):
+			case r.isDigitSep(s.This) && r.isDigit(s.Next) && r.isDigit(s.Peek(-1)):
 				s.Skip()
 			default:
 				return
@@ -473,13 +480,13 @@ func (r NumRule) Eval(s *Scanner) bool {
 	}
 
 	scanDigits()
-	if s.Is(r.decSep) {
+	if r.isDecSep(s.This) {
 		if !r.emptyPartsAllowed {
 			if !seenDigit {
 				s.Undo()
 				return false
 			}
-			if !s.NextIs(r.digit) {
+			if !r.isDigit(s.Next) {
 				return true
 			}
 		}
@@ -496,20 +503,20 @@ func (r NumRule) Eval(s *Scanner) bool {
 		return false
 	}
 
-	if s.Is(r.exp) && (s.NextIs(r.digit) ||
-		(s.NextIs(r.expSign) && s.PeekIs(2, r.digit))) {
+	if r.isExp(s.This) && (r.isDigit(s.Next) ||
+		(r.isExpSign(s.Next)) && r.isDigit(s.Peek(2))) {
 		s.Type = RealType
 		if r.realType != "" {
 			s.Type = r.realType
 		}
 		s.Keep()
-		if s.Is(r.expSign) {
+		if r.isExpSign(s.This) {
 			s.Keep()
 		}
 		scanDigits()
 	}
 
-	for _, r := range r.suffix {
+	for _, r := range r.suffixRules {
 		if r.Eval(s) {
 			break
 		}
@@ -518,18 +525,18 @@ func (r NumRule) Eval(s *Scanner) bool {
 }
 
 var (
-	Bin           NumRule = NewNumRule(Digit01).WithIntType(BinType)
-	Bin0b         NumRule = Bin.WithPrefix(Literal("0b", "0B"))
-	Hex           NumRule = NewNumRule(Digit0F).WithIntType(HexType)
-	Hex0x         NumRule = Hex.WithPrefix(Literal("0x", "0X"))
-	Oct           NumRule = NewNumRule(Digit07).WithIntType(OctType)
-	Oct0o         NumRule = Oct.WithPrefix(Literal("0o", "0O"))
-	Int           NumRule = NewNumRule(Digit09)
-	Real          NumRule = Int.WithDecSep(Rune('.'))
-	RealExp       NumRule = Real.WithExp(Rune('e', 'E')).WithExpSign(Sign)
-	SignedInt     NumRule = Int.WithSign(Sign)
-	SignedReal    NumRule = Real.WithSign(Sign)
-	SignedRealExp NumRule = RealExp.WithSign(Sign)
+	BinRule           NumRule = NewNumRule(IsDigit01).WithIntType(BinType)
+	Bin0bRule         NumRule = BinRule.WithPrefix(Literal("0b", "0B"))
+	HexRule           NumRule = NewNumRule(IsDigit0F).WithIntType(HexType)
+	Hex0xRule         NumRule = HexRule.WithPrefix(Literal("0x", "0X"))
+	OctRule           NumRule = NewNumRule(IsDigit07).WithIntType(OctType)
+	Oct0oRule         NumRule = OctRule.WithPrefix(Literal("0o", "0O"))
+	IntRule           NumRule = NewNumRule(IsDigit09)
+	RealRule          NumRule = IntRule.WithDecSep(Rune('.'))
+	RealExpRule       NumRule = RealRule.WithExp(Rune('e', 'E')).WithExpSign(IsSign)
+	SignedIntRule     NumRule = IntRule.WithSign(IsSign)
+	SignedRealRule    NumRule = RealRule.WithSign(IsSign)
+	SignedRealExpRule NumRule = RealExpRule.WithSign(IsSign)
 )
 
 type OctEncRule struct {
@@ -540,13 +547,13 @@ func NewOctEncRule() OctEncRule {
 }
 
 func (r OctEncRule) Eval(s *Scanner) bool {
-	if !s.Is(Digit07) {
+	if !IsDigit07(s.This) {
 		return false
 	}
 	digits := make([]rune, 3)
 	for i := 0; i < 3; i++ {
 		ch := s.Peek(i)
-		if !Digit07(ch) {
+		if !IsDigit07(ch) {
 			s.Illegal("invalid encoding: %v", Quote(string(digits[:i])))
 			Repeat(s.Keep, i)
 			return true
@@ -668,8 +675,8 @@ func (r StrRule) Eval(s *Scanner) bool {
 }
 
 var (
-	StrDoubleQuote = NewStrRule('"', '"').WithEscape('\\')
-	StrSingleQuote = NewStrRule('\'', '\'').WithEscape('\\')
+	StrDoubleQuoteRule = NewStrRule('"', '"').WithEscape('\\')
+	StrSingleQuoteRule = NewStrRule('\'', '\'').WithEscape('\\')
 )
 
 type trueRule struct{}
@@ -680,23 +687,23 @@ func (r trueRule) Eval(s *Scanner) bool {
 
 var TrueRule = trueRule{}
 
-type WhileClassRule struct {
-	keep  bool
-	class Class
-	type_ string
+type WhileRule struct {
+	keep    bool
+	isClass Class
+	type_   string
 }
 
-func NewWhileClassRule(space Class, type_ string) WhileClassRule {
-	return WhileClassRule{class: space, type_: type_, keep: true}
+func NewWhileRule(space Class, type_ string) WhileRule {
+	return WhileRule{isClass: space, type_: type_, keep: true}
 }
 
-func (r WhileClassRule) WithKeep(b bool) WhileClassRule {
+func (r WhileRule) WithKeep(b bool) WhileRule {
 	r.keep = b
 	return r
 }
 
-func (r WhileClassRule) Eval(s *Scanner) bool {
-	if !s.Is(r.class) {
+func (r WhileRule) Eval(s *Scanner) bool {
+	if !r.isClass(s.This) {
 		return false
 	}
 
@@ -708,12 +715,12 @@ func (r WhileClassRule) Eval(s *Scanner) bool {
 		action = s.Discard
 	}
 
-	While(s, r.class, action)
+	While(s, r.isClass, action)
 	return true
 }
 
 var (
-	SkipWhitespaceRule = NewWhileClassRule(Whitespace, SpaceType).WithKeep(false)
-	KeepWhitespaceRule = NewWhileClassRule(Whitespace, SpaceType)
-	WordRule           = NewWhileClassRule(Not(Whitespace), WordType)
+	SkipSpaceRule = NewWhileRule(IsSpace, SpaceType).WithKeep(false)
+	KeepSpaceRule = NewWhileRule(IsSpace, SpaceType)
+	WordRule      = NewWhileRule(Not(IsSpace), WordType)
 )

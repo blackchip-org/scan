@@ -7,12 +7,12 @@ import (
 )
 
 func Example_example2() {
-	digit09 := func(r rune) bool {
+	isDigit09 := func(r rune) bool {
 		return r >= '0' && r <= '9'
 	}
 
 	s := scan.NewScannerFromString("", "1010234abc!")
-	for s.HasMore() && digit09(s.This) {
+	for s.HasMore() && isDigit09(s.This) {
 		s.Keep()
 	}
 	tok := s.Emit()

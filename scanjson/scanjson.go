@@ -11,13 +11,13 @@ var (
 			scan.CarriageReturnEnc,
 			scan.HorizontalTabEnc,
 		),
-		scan.Hex4Enc,
+		scan.Hex4EncRule,
 	}
 )
 
 var (
-	String = scan.StrDoubleQuote.WithEscapeRules(EscapeRules...)
-	Number = scan.RealExp.
+	String = scan.StrDoubleQuoteRule.WithEscapeRules(EscapeRules...)
+	Number = scan.RealExpRule.
 		WithSign(scan.Rune('-')).
 		WithLeadingZeroAllowed(false).
 		WithEmptyPartsAllowed(false)
@@ -25,7 +25,7 @@ var (
 		"{", "}", "[", "]", ":", ",",
 		"true", "false", "null",
 	)
-	Whitespace = scan.NewWhileClassRule(scan.Rune(' ', '\n', '\r', '\t'), "").WithKeep(false)
+	Whitespace = scan.NewWhileRule(scan.Rune(' ', '\n', '\r', '\t'), "").WithKeep(false)
 )
 
 type Context struct {

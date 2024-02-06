@@ -8,10 +8,10 @@ import (
 
 func Example_example9() {
 	rules := scan.NewRuleSet(
-		scan.KeepWhitespaceRule,
-		scan.NewWhileClassRule(scan.Letter, scan.WordType),
-		scan.Int.WithDigitSep(scan.Rune(',')),
-	).WithNoMatchFunc(scan.UnexpectedUntil(scan.Whitespace))
+		scan.KeepSpaceRule,
+		scan.NewWhileRule(scan.IsLetter, scan.WordType),
+		scan.IntRule.WithDigitSep(scan.Rune(',')),
+	).WithNoMatchFunc(scan.UnexpectedUntil(scan.IsSpace))
 
 	s := scan.NewScannerFromString("example9", "abc 1,234 !@#  \tdef45,678")
 	runner := scan.NewRunner(s, rules)

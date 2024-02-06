@@ -7,53 +7,53 @@ import (
 )
 
 type IntRule struct {
-	digit scan.Class
+	isDigit scan.Class
 }
 
-func NewIntRule(digit scan.Class) IntRule {
-	return IntRule{digit: digit}
+func NewIntRule(isDigit scan.Class) IntRule {
+	return IntRule{isDigit: isDigit}
 }
 
 func (r IntRule) Eval(s *scan.Scanner) bool {
-	if !s.Is(r.digit) {
+	if !r.isDigit(s.This) {
 		return false
 	}
 	s.Type = scan.IntType
-	scan.While(s, r.digit, s.Keep)
+	scan.While(s, r.isDigit, s.Keep)
 	return true
 }
 
 type WordRule struct {
-	letter scan.Class
+	isLetter scan.Class
 }
 
-func NewWordRule(letter scan.Class) WordRule {
-	return WordRule{letter: letter}
+func NewWordRule(isLetter scan.Class) WordRule {
+	return WordRule{isLetter: isLetter}
 }
 
 func (r WordRule) Eval(s *scan.Scanner) bool {
-	if !s.Is(r.letter) {
+	if !r.isLetter(s.This) {
 		return false
 	}
 	s.Type = scan.WordType
-	scan.While(s, r.letter, s.Keep)
+	scan.While(s, r.isLetter, s.Keep)
 	return true
 }
 
 type SpaceRule struct {
-	space scan.Class
+	isSpace scan.Class
 }
 
-func NewSpaceRule(space scan.Class) SpaceRule {
-	return SpaceRule{space: space}
+func NewSpaceRule(isSpace scan.Class) SpaceRule {
+	return SpaceRule{isSpace: isSpace}
 }
 
 func (r SpaceRule) Eval(s *scan.Scanner) bool {
-	if !s.Is(r.space) {
+	if !r.isSpace(s.This) {
 		return false
 	}
 	s.Type = scan.SpaceType
-	scan.While(s, r.space, s.Keep)
+	scan.While(s, r.isSpace, s.Keep)
 	return true
 }
 
@@ -66,10 +66,10 @@ func UnexpectedUntil(c scan.Class) func(*scan.Scanner) {
 
 func Example_example7() {
 	rules := scan.NewRuleSet(
-		NewSpaceRule(scan.Whitespace),
-		NewWordRule(scan.Letter),
-		NewIntRule(scan.Digit),
-	).WithNoMatchFunc(UnexpectedUntil(scan.Whitespace))
+		NewSpaceRule(scan.IsSpace),
+		NewWordRule(scan.IsLetter),
+		NewIntRule(scan.IsDigit),
+	).WithNoMatchFunc(UnexpectedUntil(scan.IsSpace))
 
 	s := scan.NewScannerFromString("example7", "abc 123 !@#  \tdef456")
 	runner := scan.NewRunner(s, rules)

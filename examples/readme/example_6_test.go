@@ -7,29 +7,29 @@ import (
 )
 
 func scanInt(s *scan.Scanner) bool {
-	if !s.Is(scan.Digit09) {
+	if !scan.IsDigit09(s.This) {
 		return false
 	}
 	s.Type = scan.IntType
-	scan.While(s, scan.Digit09, s.Keep)
+	scan.While(s, scan.IsDigit09, s.Keep)
 	return true
 }
 
 func scanWord(s *scan.Scanner) bool {
-	if !s.Is(scan.Letter) {
+	if !scan.IsLetter(s.This) {
 		return false
 	}
 	s.Type = scan.WordType
-	scan.While(s, scan.Letter, s.Keep)
+	scan.While(s, scan.IsLetter, s.Keep)
 	return true
 }
 
 func scanSpace(s *scan.Scanner) bool {
-	if !s.Is(scan.Whitespace) {
+	if !scan.IsSpace(s.This) {
 		return false
 	}
 	s.Type = scan.SpaceType
-	scan.While(s, scan.Whitespace, s.Keep)
+	scan.While(s, scan.IsSpace, s.Keep)
 	return true
 }
 
@@ -51,7 +51,7 @@ func Example_example6() {
 			}
 		}
 		if !match {
-			scan.Until(s, scan.Whitespace, s.Keep)
+			scan.Until(s, scan.IsSpace, s.Keep)
 			s.Illegal("unexpected %v", scan.Quote(s.Val.String()))
 			toks = append(toks, s.Emit())
 		}

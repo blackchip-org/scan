@@ -37,13 +37,13 @@ var (
 )
 
 var (
-	Bin = scan.Bin0b.
+	Bin = scan.Bin0bRule.
 		WithIntType(IntType).
 		WithDigitSep(scan.Rune('_')).
 		WithLeadingDigitSepAllowed(true).
 		WithSuffix(ImagSuffix)
 	GenComment = scan.NewCommentRule(scan.Literal("/*"), scan.Literal("*/"))
-	HexFloat   = scan.NewNumRule(scan.Digit0F).
+	HexFloat   = scan.NewNumRule(scan.IsDigit0F).
 			WithIntType(IntType).
 			WithRealType(FloatType).
 			WithPrefix(scan.Literal("0x", "0X")).
@@ -53,14 +53,14 @@ var (
 			WithDigitSep(scan.Rune('_')).
 			WithLeadingDigitSepAllowed(true).
 			WithSuffix(ImagSuffix)
-	Ident    = scan.Ident.WithKeywords(Keywords...)
-	IntFloat = scan.RealExp.
+	Ident    = scan.StandardIdentRule.WithKeywords(Keywords...)
+	IntFloat = scan.RealExpRule.
 			WithIntType(IntType).
 			WithRealType(FloatType).
 			WithDigitSep(scan.Rune('_')).
 			WithSuffix(ImagSuffix)
 	LineComment = scan.NewCommentRule(scan.Literal("//"), scan.Literal("\n"))
-	Oct         = scan.Oct0o.
+	Oct         = scan.Oct0oRule.
 			WithIntType(IntType).
 			WithDigitSep(scan.Rune('_')).
 			WithLeadingDigitSepAllowed(true).
@@ -78,7 +78,7 @@ var (
 		WithEscape('\\').
 		WithEscapeRules(EscapeRules(StringType)...)
 	Symbols    = scan.Literal(OpsPunct...)
-	Whitespace = scan.NewWhileClassRule(scan.Rune(' ', '\t', '\r'), "").WithKeep(false)
+	Whitespace = scan.NewWhileRule(scan.Rune(' ', '\t', '\r'), "").WithKeep(false)
 )
 
 func EscapeRules(type_ string) []scan.Rule {
@@ -95,9 +95,9 @@ func EscapeRules(type_ string) []scan.Rule {
 			scan.HorizontalTabEnc,
 			scan.VerticalTabEnc,
 		),
-		scan.Hex2Enc.AsByte(type_ == StringType),
-		scan.Hex4Enc,
-		scan.Hex8Enc,
+		scan.Hex2EncRule.AsByte(type_ == StringType),
+		scan.Hex4EncRule,
+		scan.Hex8EncRule,
 		scan.OctEnc,
 	}
 }
@@ -136,10 +136,12 @@ func AutoSemiInsertion() func(*scan.Scanner, scan.Token) scan.Token {
 	}
 }
 
+var isImag = scan.Rune('i')
+
 type ImagSuffixRule struct{}
 
 func (r ImagSuffixRule) Eval(s *scan.Scanner) bool {
-	if s.Is(scan.Rune('i')) {
+	if isImag(s.This) {
 		s.Keep()
 		s.Type = ImagType
 		return true

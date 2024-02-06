@@ -198,20 +198,6 @@ func (s *Scanner) HasMore() bool {
 	return s.This != EndOfText
 }
 
-func (s *Scanner) Is(c Class) bool {
-	if c == nil {
-		return false
-	}
-	return c(s.This)
-}
-
-func (s *Scanner) NextIs(c Class) bool {
-	if c == nil {
-		return false
-	}
-	return c(s.Next)
-}
-
 func (s *Scanner) Peek(i int) rune {
 	if i == 0 {
 		return s.This
@@ -232,13 +218,6 @@ func (s *Scanner) Peek(i int) rune {
 		return EndOfText
 	}
 	return chs[li]
-}
-
-func (s *Scanner) PeekIs(i int, c Class) bool {
-	if c == nil {
-		return false
-	}
-	return c(s.Peek(i))
 }
 
 // Keep advances the stream to the next rune and adds the current rune to

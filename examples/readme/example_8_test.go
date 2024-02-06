@@ -7,28 +7,31 @@ import (
 )
 
 type IntRule2 struct {
-	digit    scan.Class
-	digitSep scan.Class
+	isDigit    scan.Class
+	isDigitSep scan.Class
 }
 
-func NewIntRule2(digit scan.Class) IntRule2 {
-	return IntRule2{digit: digit}
+func NewIntRule2(isDigit scan.Class) IntRule2 {
+	return IntRule2{
+		isDigit:    isDigit,
+		isDigitSep: scan.IsNone,
+	}
 }
 
-func (r IntRule2) WithDigitSep(digitSep scan.Class) IntRule2 {
-	r.digitSep = digitSep
+func (r IntRule2) WithDigitSep(isDigitSep scan.Class) IntRule2 {
+	r.isDigitSep = isDigitSep
 	return r
 }
 
 func (r IntRule2) Eval(s *scan.Scanner) bool {
-	if !s.Is(r.digit) {
+	if !r.isDigit(s.This) {
 		return false
 	}
 	s.Keep()
 	for s.HasMore() {
-		if s.Is(r.digit) {
+		if r.isDigit(s.This) {
 			s.Keep()
-		} else if s.Is(r.digitSep) {
+		} else if r.isDigitSep(s.This) {
 			s.Skip()
 		} else {
 			break
@@ -39,11 +42,11 @@ func (r IntRule2) Eval(s *scan.Scanner) bool {
 
 func Example_example8() {
 	rules := scan.NewRuleSet(
-		NewSpaceRule(scan.Whitespace),
-		NewWordRule(scan.Letter),
-		NewIntRule2(scan.Digit).
+		NewSpaceRule(scan.IsSpace),
+		NewWordRule(scan.IsLetter),
+		NewIntRule2(scan.IsDigit).
 			WithDigitSep(scan.Rune(',')),
-	).WithNoMatchFunc(UnexpectedUntil(scan.Whitespace))
+	).WithNoMatchFunc(UnexpectedUntil(scan.IsSpace))
 
 	s := scan.NewScannerFromString("example8", "abc 1,234 !@#  \tdef45,678")
 	runner := scan.NewRunner(s, rules)
