@@ -251,7 +251,7 @@ classes return `true` under the following conditions:
 - `scan.IsPrintable`: printable as defined by Unicode
 - `scan.IsRune8`: a code point that can fit in an 8-bit number
 - `scan.IsRune16`: a code point that can fit in a 16-bit number
-- `scan.IsWhitespace`: whitespace as defined by Unicode.
+- `scan.IsSpace`: whitespace as defined by Unicode.
 
 ### Updated Example
 
