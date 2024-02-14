@@ -518,8 +518,8 @@ interface. Changing the integer function to a rule looks like this:
 
 With this change, this one rule can be used for scanning decimal, binary,
 octal, and hexadecimal numbers simply by calling new with the corresponding
-digit class .The rules for word and whitespace looks similar and aren't
-show here. The full source code for the example can be found in the
+digit class. The rules for word and whitespace looks similar and aren't
+shown here. The full source code for the example can be found in the
 Example 7 links.
 
 Now a function is needed to handle the case where a token does not match. This
