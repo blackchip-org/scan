@@ -581,6 +581,7 @@ type StrRule struct {
 	escapeRules RuleSet
 	multiline   bool
 	maxLen      uint
+	optTerm     bool
 }
 
 func NewStrRule(begin rune, end rune) StrRule {
@@ -613,6 +614,11 @@ func (r StrRule) WithMultiline(b bool) StrRule {
 
 func (r StrRule) WithMaxLen(l uint) StrRule {
 	r.maxLen = l
+	return r
+}
+
+func (r StrRule) WithOptionalTerminator(t bool) StrRule {
+	r.optTerm = t
 	return r
 }
 
@@ -649,7 +655,9 @@ func (r StrRule) Eval(s *Scanner) bool {
 		switch {
 		case s.This == '\n':
 			if !r.multiline {
-				s.Illegal("not terminated")
+				if !r.optTerm {
+					s.Illegal("not terminated")
+				}
 				return true
 			}
 			s.Keep()
@@ -670,7 +678,9 @@ func (r StrRule) Eval(s *Scanner) bool {
 			s.Keep()
 		}
 	}
-	s.Illegal("not terminated")
+	if !r.optTerm {
+		s.Illegal("not terminated")
+	}
 	return true
 }
 

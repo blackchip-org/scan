@@ -230,6 +230,18 @@ func TestStr(t *testing.T) {
 		NewTest(`"a"`, `a`, 1, 1, StrType),
 		NewTest("'a'", "a", 1, 1, StrType),
 		NewTest(`'a\'b'`, `a'b`, 1, 1, StrType),
+		NewTest(`"a`, `a`, 1, 1, IllegalType).
+			WithError(`1:3: error: not terminated`),
+	}
+	RunTests(t, rules, tests)
+}
+
+func TestStrOptTerm(t *testing.T) {
+	rules := NewRuleSet(
+		StrDoubleQuoteRule.WithOptionalTerminator(true),
+	)
+	tests := []Test{
+		NewTest(`"a`, `a`, 1, 1, StrType),
 	}
 	RunTests(t, rules, tests)
 }
