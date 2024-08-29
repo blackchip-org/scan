@@ -245,3 +245,13 @@ func TestStrOptTerm(t *testing.T) {
 	}
 	RunTests(t, rules, tests)
 }
+
+func TestStrNesting(t *testing.T) {
+	rules := NewRuleSet(
+		NewStrRule('[', ']').WithNesting(true),
+	)
+	tests := []Test{
+		NewTest(`[[a]]`, `[a]`, 1, 1, StrType),
+	}
+	RunTests(t, rules, tests)
+}

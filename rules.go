@@ -582,6 +582,7 @@ type StrRule struct {
 	multiline   bool
 	maxLen      uint
 	optTerm     bool
+	nesting     bool
 }
 
 func NewStrRule(begin rune, end rune) StrRule {
@@ -622,6 +623,14 @@ func (r StrRule) WithOptionalTerminator(t bool) StrRule {
 	return r
 }
 
+func (r StrRule) WithNesting(t bool) StrRule {
+	if r.begin == r.end {
+		panic("nesting not possible")
+	}
+	r.nesting = true
+	return r
+}
+
 func (r StrRule) recover(s *Scanner) {
 	Until(s, Rune(r.end), s.Skip)
 	s.Skip()
@@ -639,10 +648,17 @@ func (r StrRule) Eval(s *Scanner) bool {
 	}
 
 	length := uint(0)
+	level := 1
 	for s.HasMore() {
+		if r.nesting && s.This == r.begin {
+			level++
+		}
 		if s.This == r.end {
-			s.Skip()
-			return true
+			level--
+			if !r.nesting || level == 0 {
+				s.Skip()
+				return true
+			}
 		}
 
 		length++
